@@ -1,0 +1,33 @@
+# Byte-compiled / cache files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+env/
+ENV/
+.venv/
+.ENV/
+
+# VS Code settings
+.vscode/
+
+# Node modules (if accidentally added)
+node_modules/
+
+# Python environment files
+pip-log.txt
+pip-delete-this-directory.txt
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# FastAPI/Starlette specific
+*.log
+
+# IDEs
+.idea/
+*.swp
