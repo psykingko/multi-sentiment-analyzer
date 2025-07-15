@@ -78,14 +78,19 @@ def analyze_sentiment_api(request: SentimentRequest, model: str = Query("rule", 
             else:
                 # Use rule-based model
                 cleaned = clean_text(sentence)
-                if not cleaned or not is_english(cleaned):
+                print(f"[DEBUG] Original: {sentence} | Cleaned: {cleaned}")
+                english = is_english(cleaned)
+                print(f"[DEBUG] is_english: {english}")
+                if not cleaned or not english:
                     sentiment = "Neutral"
                     avg_score = 0.0
                     confidence = 0.0
                     distribution = None
                 else:
                     avg_score, confidence = ensemble_sentiment(cleaned)
+                    print(f"[DEBUG] Score: {avg_score}, Confidence: {confidence}")
                     sentiment = classify_sentiment(avg_score)
+                    print(f"[DEBUG] Classified: {sentiment}")
                     distribution = None
             total_score += avg_score
             total_confidence += confidence

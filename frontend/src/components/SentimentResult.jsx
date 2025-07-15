@@ -189,32 +189,39 @@ const SentimentResult = ({ data }) => {
       <h2 className="unbounded-bold text-xl mb-4 z-10 relative text-white text-left">Sentence-wise Sentiment</h2>
 
       <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
-        {data.map((item, idx) => (
-          <div
-            key={idx}
-            className="bg-[#181A1B] border border-cyan-400/40 rounded-xl p-6 mb-4 shadow-lg transition-all hover:shadow-cyan-400/20 max-w-2xl mx-auto"
-          >
-            <p className="text-cyan-200 text-base mb-4 leading-relaxed">
-              "{item.sentence}"
-            </p>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-cyan-300">Sentiment:</span>
-                <span className="font-bold" style={{ color: getColor(item.sentiment) }}>{item.sentiment}</span>
-              </div>
-              <div className="flex items-center gap-2 ml-6">
-                <span className="inline-flex items-center justify-center w-7 h-7">
-                  {getIcon(item.sentiment)}
-                </span>
-                <span className="font-mono text-yellow-400">| Score: {item.score}</span>
+        {data.map((item, idx) => {
+          const sentiment = (item.sentiment || '').toLowerCase();
+          const displaySentiment = sentiment.charAt(0).toUpperCase() + sentiment.slice(1);
+          const icon = getIcon(sentiment) || getIcon('neutral');
+          const color = getColor(sentiment);
+          const score = typeof item.score === 'number' ? item.score.toFixed(2) : '0.00';
+          return (
+            <div
+              key={idx}
+              className="bg-[#181A1B] border border-cyan-400/40 rounded-xl p-6 mb-4 shadow-lg transition-all hover:shadow-cyan-400/20 max-w-2xl mx-auto"
+            >
+              <p className="text-cyan-200 text-base mb-4 leading-relaxed">
+                "{item.sentence}"
+              </p>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-cyan-300">Sentiment:</span>
+                  <span className="font-bold" style={{ color }}>{displaySentiment}</span>
+                </div>
+                <div className="flex items-center gap-2 ml-6">
+                  <span className="inline-flex items-center justify-center w-7 h-7">
+                    {icon}
+                  </span>
+                  <span className="font-mono text-yellow-400">| Score: {score}</span>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="mt-10">
-        <h3 className="unbounded-bold text-xl mb-4 z-10 relative text-white text-left">Sentiment Score Trend</h3>
+        <h3 className="unbounded-bold text-xl mb-4 z-10 relative text-white text-left">Sentence-wise Sentiment Score Trend</h3>
         {/* Only keep the sentiment score (line) graph, restyled */}
         <div className="h-72 bg-[#181A1B] p-4 rounded-2xl shadow-xl border border-[#23272b] flex items-center justify-center">
           <ResponsiveContainer width="100%" height="100%">

@@ -3,7 +3,7 @@ import os
 from typing import Optional
 
 try:
-    from transformers import pipeline
+    from transformers.pipelines import pipeline
 except ImportError:
     pipeline = None
 
@@ -29,15 +29,13 @@ def analyze_sentiment_bert(text: str) -> Optional[dict]:
         pipe = load_bert_pipeline()
         result = pipe(text)
         if result and isinstance(result, list) and len(result) > 0:
-            # result[0] is a list of dicts: [{label: 'joy', score: ...}, ...]
             emotions = result[0]
-            top_emotion = max(emotions, key=lambda x: x["score"])
+            top_emotion = max(emotions, key=lambda x: x["score"])  # type: ignore
             return {
-                "emotion": top_emotion["label"],
-                "score": float(top_emotion["score"]),
-                "distribution": {e["label"]: float(e["score"]) for e in emotions}
+                "emotion": top_emotion["label"],  # type: ignore
+                "score": float(top_emotion["score"]),  # type: ignore
+                "distribution": {e["label"]: float(e["score"]) for e in emotions}  # type: ignore
             }
         return None
     except Exception as e:
-        print(f"[BERT ERROR] {e}")
         return None

@@ -17,6 +17,9 @@ def clean_text(text):
     return text
 
 def is_english(text):
+    # Bypass language detection for very short sentences
+    if len(text.split()) <= 4:
+        return True
     try:
         return detect(text) == 'en'
     except LangDetectException:
