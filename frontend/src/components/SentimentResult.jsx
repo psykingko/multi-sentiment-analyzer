@@ -6,7 +6,60 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
+  LineChart,
+  Line,
+  CartesianGrid,
+  ReferenceLine,
 } from "recharts";
+import { Fragment, useMemo } from "react";
+
+// Simple emotion lexicon for demo word highlighting
+const EMOTION_LEXICON = {
+  joy: ["happy", "joy", "delight", "pleasure", "smile", "cheerful", "glad"],
+  sadness: ["sad", "cry", "tears", "sorrow", "grief", "unhappy", "depressed"],
+  anger: ["angry", "rage", "mad", "furious", "irritated", "annoyed"],
+  fear: ["fear", "scared", "afraid", "terrified", "panic", "nervous"],
+  surprise: ["surprised", "amazed", "astonished", "shocked", "startled"],
+  disgust: ["disgust", "gross", "nausea", "repulsed", "revolted"],
+  contempt: ["contempt", "disdain", "scorn", "mock", "sneer"],
+  positive: ["good", "great", "excellent", "love", "wonderful", "best"],
+  negative: ["bad", "terrible", "worst", "hate", "awful", "poor"],
+  neutral: [],
+};
+
+// Sleek SVG icon mapping for each sentiment
+const SENTIMENT_ICONS = {
+  positive: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 15s1.5 2 4 2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+  ),
+  negative: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 15s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+  ),
+  neutral: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="8" y1="15" x2="16" y2="15"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+  ),
+  joy: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#facc15" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 15s1.5 2 4 2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+  ),
+  sadness: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 15s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+  ),
+  anger: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f472b6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 15s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/><path d="M8 8l2 2"/><path d="M16 8l-2 2"/></svg>
+  ),
+  fear: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="16" rx="4" ry="2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+  ),
+  surprise: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="15" r="1.5"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+  ),
+  disgust: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a3e635" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 15c1.5-1 6.5-1 8 0"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+  ),
+  contempt: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 15c1.5-1 6.5-1 8 0"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+  ),
+};
 
 const SentimentResult = ({ data }) => {
   if (!data || data.length === 0) return null;
@@ -18,50 +71,174 @@ const SentimentResult = ({ data }) => {
       case "negative":
         return "#f87171"; // red
       case "neutral":
-      default:
         return "#a3a3a3"; // gray
+      case "joy":
+        return "#facc15"; // yellow
+      case "sadness":
+        return "#60a5fa"; // blue
+      case "anger":
+        return "#f472b6"; // pink
+      case "fear":
+        return "#818cf8"; // indigo
+      case "surprise":
+        return "#34d399"; // teal
+      case "disgust":
+        return "#a3e635"; // lime
+      case "contempt":
+        return "#fbbf24"; // amber
+      default:
+        return "#a3a3a3"; // fallback gray
     }
   };
 
+  const getIcon = (sentiment) => {
+    return SENTIMENT_ICONS[sentiment.toLowerCase()] || null;
+  };
+
+  // Prepare chart data with index for X axis
+  const chartData = data.map((item, idx) => ({
+    ...item,
+    idx: idx + 1,
+    icon: getIcon(item.sentiment),
+    color: getColor(item.sentiment),
+  }));
+
+  // Color palette for vibrant bars
+  const SENTIMENT_PALETTE = {
+    positive: "#4ade80",
+    negative: "#f87171",
+    neutral: "#a3a3a3",
+    joy: "#facc15",
+    sadness: "#60a5fa",
+    anger: "#f472b6",
+    fear: "#818cf8",
+    surprise: "#34d399",
+    disgust: "#a3e635",
+    contempt: "#fbbf24",
+  };
+
+  // Calculate sentiment distribution for bar chart and summary
+  const sentimentCounts = useMemo(() => {
+    const counts = {};
+    data.forEach((item) => {
+      const key = item.sentiment.toLowerCase();
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    return counts;
+  }, [data]);
+  const total = data.length;
+  const distributionData = Object.entries(sentimentCounts).map(([sentiment, count]) => ({
+    sentiment,
+    count,
+    color: SENTIMENT_PALETTE[sentiment] || "#a3a3a3",
+    icon: getIcon(sentiment),
+  }));
+
+  // Legend for the bar chart
+  const Legend = () => (
+    <div className="flex flex-wrap gap-4 mt-4 mb-2">
+      {distributionData.map((d) => (
+        <div key={d.sentiment} className="flex items-center gap-2">
+          <span style={{ background: d.color, width: 16, height: 16, borderRadius: 4, display: 'inline-block' }}></span>
+          <span className="inter-regular text-sm text-white/80">{d.icon} {d.sentiment.charAt(0).toUpperCase() + d.sentiment.slice(1)}</span>
+        </div>
+      ))}
+    </div>
+  );
+
+  // Animated Bar Chart Tooltip
+  const BarTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+      const d = payload[0].payload;
+      return (
+        <div className="bg-white/90 rounded-xl shadow-lg px-4 py-2 animate-fade-in flex items-center gap-2 min-w-0 max-w-xs mx-auto text-base inter-semibold"
+          style={{ pointerEvents: 'none', minWidth: 'unset', maxWidth: 220 }}>
+          <span className="text-xl">{d.icon}</span>
+          <span>{d.sentiment.charAt(0).toUpperCase() + d.sentiment.slice(1)}</span>
+          <span className="ml-2 font-mono">{d.count} ({((d.count/total)*100).toFixed(1)}%)</span>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  // Summary sentence
+  const topSentiment = distributionData.reduce((a, b) => (a.count > b.count ? a : b), { count: 0 });
+  const summarySentence = total > 0
+    ? `Most sentences are ${topSentiment.sentiment} (${topSentiment.count}/${total}, ${(topSentiment.count/total*100).toFixed(1)}%).`
+    : "No sentiment data available.";
+
+  // Custom tooltip for the line chart
+  const CustomTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+      const d = payload[0].payload;
+      return (
+        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg px-4 py-2 border border-gray-200 dark:border-gray-700 animate-fade-in flex items-center gap-2 min-w-0 max-w-xs mx-auto text-base inter-semibold"
+          style={{ pointerEvents: 'none', minWidth: 'unset', maxWidth: 220 }}>
+          <span className="text-xl">{d.icon}</span>
+          <span>{d.sentiment}</span>
+          <span className="ml-2 font-mono">{d.score}</span>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
-    <div className="mt-10">
-      <h2 className="text-xl font-semibold mb-4">Sentence-wise Sentiment</h2>
+    <div className="mt-10 w-full max-w-5xl mx-auto">
+      <h2 className="unbounded-bold text-xl mb-4 z-10 relative text-white text-left">Sentence-wise Sentiment</h2>
 
       <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
         {data.map((item, idx) => (
           <div
             key={idx}
-            className={`p-4 border rounded-lg shadow-sm transition duration-300`}
-            style={{
-              backgroundColor: `${getColor(item.sentiment)}20`,
-              borderColor: getColor(item.sentiment),
-              color: getColor(item.sentiment),
-            }}
+            className="bg-[#181A1B] border border-cyan-400/40 rounded-xl p-6 mb-4 shadow-lg transition-all hover:shadow-cyan-400/20 max-w-2xl mx-auto"
           >
-            <p className="font-medium mb-2">“{item.sentence}”</p>
-            <div className="text-sm">
-              <span className="font-semibold">Sentiment:</span> {item.sentiment}{" "}
-              &nbsp;|&nbsp;
-              <span className="font-semibold">Score:</span> {item.score}
+            <p className="text-cyan-200 text-base mb-4 leading-relaxed">
+              "{item.sentence}"
+            </p>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-cyan-300">Sentiment:</span>
+                <span className="font-bold" style={{ color: getColor(item.sentiment) }}>{item.sentiment}</span>
+              </div>
+              <div className="flex items-center gap-2 ml-6">
+                <span className="inline-flex items-center justify-center w-7 h-7">
+                  {getIcon(item.sentiment)}
+                </span>
+                <span className="font-mono text-yellow-400">| Score: {item.score}</span>
+              </div>
             </div>
           </div>
         ))}
       </div>
 
       <div className="mt-10">
-        <h3 className="text-lg font-semibold mb-4">Sentiment Score Chart</h3>
-        <div className="h-72 bg-white dark:bg-gray-800 p-4 rounded shadow-md">
+        <h3 className="unbounded-bold text-xl mb-4 z-10 relative text-white text-left">Sentiment Score Trend</h3>
+        {/* Only keep the sentiment score (line) graph, restyled */}
+        <div className="h-72 bg-[#181A1B] p-4 rounded-2xl shadow-xl border border-[#23272b] flex items-center justify-center">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data}>
-              <XAxis dataKey="sentence" tick={{ fontSize: 12 }} hide />
-              <YAxis domain={[0, 1]} />
-              <Tooltip />
-              <Bar dataKey="score">
-                {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={getColor(entry.sentiment)} />
-                ))}
-              </Bar>
-            </BarChart>
+            <LineChart data={chartData} margin={{ top: 20, right: 30, left: 10, bottom: 10 }}>
+              <defs>
+                <linearGradient id="scoreGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#FFD700" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="#00FFD0" stopOpacity={0.2}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke="#23272b" strokeDasharray="3 3" />
+              <XAxis dataKey="idx" stroke="#FFD700" tick={{ fill: '#FFD700', fontSize: 14, fontFamily: 'inherit' }} />
+              <YAxis stroke="#FFD700" tick={{ fill: '#FFD700', fontSize: 14, fontFamily: 'inherit' }} />
+              <Tooltip content={CustomTooltip} cursor={{ stroke: '#FFD700', strokeWidth: 1, opacity: 0.2 }} />
+              <Line
+                type="monotone"
+                dataKey="score"
+                stroke="url(#scoreGradient)"
+                strokeWidth={3}
+                dot={{ r: 5, stroke: '#FFD700', strokeWidth: 2, fill: '#181A1B' }}
+                activeDot={{ r: 7, stroke: '#FFD700', strokeWidth: 3, fill: '#FFD700' }}
+                isAnimationActive={true}
+              />
+            </LineChart>
           </ResponsiveContainer>
         </div>
       </div>

@@ -1,0 +1,102 @@
+import InputBox from "../components/InputBox";
+import { useState, lazy, Suspense } from "react";
+import axios from "axios";
+import Tooltip from '../components/Tooltip'; // Assume Tooltip exists or will be created
+
+const SentimentResult = lazy(() => import("../components/SentimentResult"));
+const Summary = lazy(() => import("../components/Summary"));
+
+const instructions = [
+  "Select the analysis model (Rule-Based or Deep Learning).",
+  "Type or speak your text using the input box and mic icon.",
+  "Click 'Analyze' to process your text.",
+  "View the sentiment and emotion results below."
+];
+
+export default function Analyzer() {
+  const [hasResults, setHasResults] = useState(false);
+  const [model, setModel] = useState("rule");
+  const [result, setResult] = useState(null);
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleAnalyze(text, selectedModel) {
+    setLoading(true);
+    try {
+      const response = await axios.post(
+        `http://127.0.0.1:8000/analyze?model=${selectedModel}`,
+        { paragraph: text }
+      );
+      setResult(response.data.results);
+      setSummary(response.data.paragraph_sentiment);
+      setHasResults(true);
+    } catch (error) {
+      alert("Analysis failed. Please try again.");
+      setHasResults(false);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col items-center w-full min-h-screen bg-transparent px-2">
+      <h1 className="unbounded-bold text-4xl md:text-5xl mb-4 mt-8 tracking-widest text-white text-center drop-shadow-lg">Text Analyzer</h1>
+      {/* Hero Input Section */}
+      <section className="w-full flex flex-col items-center justify-center min-h-[60vh] py-8">
+        <div className="w-full max-w-4xl">
+          <InputBox model={model} setModel={setModel} onAnalyze={handleAnalyze} loading={loading} />
+        </div>
+        {/* Sentiment Results directly below input if present */}
+        {hasResults && (
+          <section className="w-full max-w-4xl mx-auto mt-8 mb-10">
+            <div className="rounded-2xl border border-white/20 shadow-xl p-8 backdrop-blur-md bg-white/5 text-white">
+              <h2 className="unbounded-bold text-2xl mb-4 text-[#FFD700]">Sentiment Results</h2>
+              <Suspense fallback={<div className="text-center p-4">Loading results...</div>}>
+                <SentimentResult data={result} />
+              </Suspense>
+              {summary && (
+                <div className="mt-6">
+                  <Suspense fallback={<div className="text-center p-4">Loading summary...</div>}>
+                    <Summary summary={summary} />
+                  </Suspense>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+      </section>
+      {/* Divider */}
+      <hr className="w-full max-w-4xl my-10 border-0 h-1 bg-gradient-to-r from-transparent via-[#FFD700] to-transparent shadow-[0_0_8px_2px_#FFD70044] rounded-full" />
+      {/* How to Use Section */}
+      <section className="w-full max-w-4xl mx-auto mb-10">
+        <div className="rounded-2xl border border-white/20 shadow-xl p-8 min-h-[260px] flex flex-col justify-center items-center backdrop-blur-md bg-white/5 text-white">
+          <h2 className="unbounded-bold text-2xl mb-4 text-[#FFD700] text-center tracking-wider">How to Use</h2>
+          <ol className="list-decimal list-inside space-y-2 inter-regular text-white/90 text-base md:text-lg w-full text-center mx-auto">
+            <li>Select the analysis model (Rule-Based or Deep Learning).</li>
+            <li>Type or speak your text using the input box and mic icon.</li>
+            <li>Click 'Analyze' to process your text.</li>
+            <li>View the sentiment and emotion results below.</li>
+          </ol>
+        </div>
+      </section>
+      {/* Divider */}
+      <hr className="w-full max-w-4xl my-10 border-0 h-1 bg-gradient-to-r from-transparent via-[#FFD700] to-transparent shadow-[0_0_8px_2px_#FFD70044] rounded-full" />
+      {/* Model Options Section */}
+      <section className="w-full max-w-4xl mx-auto mb-10">
+        <div className="rounded-2xl border border-white/20 shadow-xl p-8 min-h-[260px] flex flex-col justify-center items-center backdrop-blur-md bg-white/5 text-white">
+          <h2 className="unbounded-bold text-2xl mb-4 text-[#FFD700]">Model Options</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-x-8 w-full items-stretch">
+            <div className="rounded-2xl border border-white/20 shadow-xl p-6 flex flex-col items-center text-center backdrop-blur-md bg-white/5 w-full h-full flex-1 justify-center">
+              <h4 className="unbounded-bold text-lg mb-2 text-[#FFD700]">Fast & Simple (Recommended)</h4>
+              <p className="inter-regular text-base text-white/80">Uses VADER and TextBlob for quick, reliable sentiment analysis. Great for most users and works instantly online.</p>
+            </div>
+            <div className="rounded-2xl border border-white/20 shadow-xl p-6 flex flex-col items-center text-center backdrop-blur-md bg-white/5 w-full h-full flex-1 justify-center">
+              <h4 className="unbounded-bold text-lg mb-2 text-[#FFD700]">Advanced AI (Local Only)</h4>
+              <p className="inter-regular text-base text-white/80">Uses advanced AI models (BERT) for deeper emotion detection. Requires more resources and only works on your own device.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+} 

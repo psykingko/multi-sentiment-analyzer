@@ -1,33 +1,13 @@
-# Byte-compiled / cache files
+# Ignore model weights and cache
+model_weights/
+
+# HuggingFace transformers cache
+**/transformers_cache/
+**/cache/
+**/models/
+
+# Python cache
 __pycache__/
-*.py[cod]
-*.pyo
-*.pyd
 
-# Virtual environment
-venv/
-env/
-ENV/
-.venv/
-.ENV/
-
-# VS Code settings
-.vscode/
-
-# Node modules (if accidentally added)
-node_modules/
-
-# Python environment files
-pip-log.txt
-pip-delete-this-directory.txt
-
-# OS junk
-.DS_Store
-Thumbs.db
-
-# FastAPI/Starlette specific
-*.log
-
-# IDEs
-.idea/
-*.swp
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/

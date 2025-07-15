@@ -1,47 +1,41 @@
 // InputBox.jsx
-import { useState, useRef } from "react";
-import { Mic, Camera } from "lucide-react";
-import { FaceMesh } from "@mediapipe/face_mesh";
-import { Camera as MediaPipeCamera } from "@mediapipe/camera_utils";
-import { getEmoji, predictEmotion } from "../utils/emotionUtil";
+import { useState, useRef, Fragment } from "react";
+import { Mic, MicOff } from "lucide-react";
+import { Listbox, Transition } from '@headlessui/react';
+import { ChevronUpDownIcon, CheckIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
+import Tooltip from './Tooltip'; // Assume Tooltip exists or will be created
 
-const InputBox = ({ onAnalyze, loading }) => {
+const modelOptions = [
+  { value: "rule", label: "Fast & Simple (Recommended)" },
+  { value: "deep", label: "Advanced AI (Local Only)" },
+];
+
+const InputBox = ({ onAnalyze, loading, model = "rule", setModel }) => {
   const [text, setText] = useState("");
   const [listening, setListening] = useState(false);
-  const [showCamera, setShowCamera] = useState(false);
-  const [scanning, setScanning] = useState(false);
-  const [faceResult, setFaceResult] = useState([]);
-
+  const [deepUnavailable, setDeepUnavailable] = useState(false);
   const recognitionRef = useRef(null);
-  const videoRef = useRef(null);
-  const cameraRef = useRef(null);
-  const faceMeshRef = useRef(null);
 
   const startListening = () => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
-
     if (!SpeechRecognition) {
       alert("Speech Recognition not supported.");
       return;
     }
-
     const recognition = new SpeechRecognition();
     recognitionRef.current = recognition;
     recognition.continuous = true;
     recognition.lang = "en-US";
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
-
     let lastResultIndex = -1;
     recognition.start();
     setListening(true);
-
     recognition.onresult = (event) => {
       const currentIndex = event.resultIndex;
       if (currentIndex === lastResultIndex) return;
       lastResultIndex = currentIndex;
-
       const transcript = event.results[currentIndex][0].transcript
         .toLowerCase()
         .trim()
@@ -50,10 +44,8 @@ const InputBox = ({ onAnalyze, loading }) => {
         .replace(/\bquestion mark\b/g, "?")
         .replace(/\bexclamation mark\b/g, "!")
         .replace(/\s+/g, " ");
-
       setText((prev) => prev.trim() + " " + transcript);
     };
-
     recognition.onerror = () => stopListening();
     recognition.onend = () => {
       if (listening) recognition.start();
@@ -66,252 +58,126 @@ const InputBox = ({ onAnalyze, loading }) => {
     setText((prev) => prev.trim().replace(/\s+/g, " "));
   };
 
-  const stopCamera = () => {
-    const stream = videoRef.current?.srcObject;
-    stream?.getTracks().forEach((track) => track.stop());
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-    cameraRef.current?.stop();
-    cameraRef.current = null;
-    faceMeshRef.current?.close();
-    faceMeshRef.current = null;
-    setShowCamera(false);
-    setScanning(false);
-  };
-
-  const handleCameraClick = async () => {
-    try {
-      setShowCamera(true);
-      setFaceResult([]);
-      setScanning(false);
-
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user", width: 640, height: 480 },
-      });
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await new Promise((resolve) => {
-          videoRef.current.onloadedmetadata = resolve;
-        });
-      }
-    } catch (error) {
-      console.error("Error accessing camera:", error);
-      alert("Could not access camera. Please check permissions.");
-      setShowCamera(false);
-    }
-  };
-
-  const startFaceScan = async () => {
-    if (!videoRef.current) return;
-
-    setScanning(true);
-    setFaceResult([]);
-
-    try {
-      const faceMesh = new FaceMesh({
-        locateFile: (file) =>
-          `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
-      });
-
-      faceMesh.setOptions({
-        maxNumFaces: 1,
-        refineLandmarks: true,
-        minDetectionConfidence: 0.5,
-        minTrackingConfidence: 0.5,
-      });
-
-      faceMeshRef.current = faceMesh;
-
-      const camera = new MediaPipeCamera(videoRef.current, {
-        onFrame: async () => {
-          await faceMesh.send({ image: videoRef.current });
-        },
-        width: 640,
-        height: 480,
-      });
-
-      cameraRef.current = camera;
-
-      const results = [];
-      let currentLandmarks = null;
-
-      faceMesh.onResults((res) => {
-        if (res.multiFaceLandmarks && res.multiFaceLandmarks.length > 0) {
-          currentLandmarks = res.multiFaceLandmarks[0];
-        } else {
-          currentLandmarks = null;
-        }
-      });
-
-      // Start the camera
-      camera.start();
-
-      // Collect results over 5 seconds
-      for (let second = 1; second <= 5; second++) {
-        const time = `${second}s`;
-
-        // Wait for 1 second
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        if (!currentLandmarks) {
-          results.push({
-            time,
-            emotion: "No Face",
-            emoji: getEmoji("no face"),
-            confidence: "0",
-          });
-        } else {
-          const { emotion, confidence } = predictEmotion(currentLandmarks);
-          console.log(
-            `🧠 Frame ${second}s → Emotion: ${emotion}, Confidence: ${confidence}`
-          );
-
-          results.push({
-            time,
-            emotion,
-            emoji: getEmoji(emotion),
-            confidence: Math.round(confidence),
-          });
-        }
-      }
-
-      setFaceResult(results);
-      stopCamera();
-    } catch (error) {
-      console.error("Error during face scanning:", error);
-      alert("Error during face scanning. Please try again.");
-      stopCamera();
-    }
-  };
-
-  const handleClick = () => {
+  const handleClick = async () => {
     if (listening) stopListening();
-    if (text.trim()) onAnalyze(text);
+    if (text.trim()) {
+      const result = await onAnalyze(text, model);
+      if (result && result.some(r => r.sentiment === "Unavailable")) {
+        setDeepUnavailable(true);
+        setModel("rule");
+      } else {
+        setDeepUnavailable(false);
+      }
+    }
   };
 
   return (
-    <>
-      <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md mb-6 relative min-h-[280px]">
-        {!showCamera ? (
-          <>
-            <textarea
-              className="w-full h-40 p-4 border border-gray-300 dark:border-gray-700 rounded-lg shadow-sm resize-none text-black dark:text-white dark:bg-gray-900"
-              placeholder="Type or speak a paragraph..."
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-            />
-            <div
-              className={`absolute bottom-6 right-6 w-10 h-10 z-30 cursor-pointer flex items-center justify-center rounded-full shadow-lg transition duration-300 ${
-                listening ? "bg-indigo-600 animate-bounce" : "bg-[#115ba6]"
-              }`}
-              onClick={listening ? stopListening : startListening}
-              title={listening ? "Stop Listening" : "Start Listening"}
-            >
-              <Mic className="text-white w-6 h-6" />
-            </div>
-            <div
-              className="absolute bottom-6 right-20 w-10 h-10 bg-green-600 hover:bg-green-700 text-white rounded-full z-30 flex items-center justify-center cursor-pointer shadow-lg transition"
-              onClick={handleCameraClick}
-              title="Open Camera"
-            >
-              <Camera className="w-6 h-6" />
-            </div>
-            <button
-              onClick={handleClick}
-              disabled={loading}
-              className="mt-4 px-6 py-2 bg-[#115ba6] text-white rounded hover:bg-[#0f4c81] flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <svg
-                    className="animate-spin h-5 w-5 text-white"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v4a4 4 0 100 8h4a8 8 0 01-8 8z"
-                    />
-                  </svg>
-                  Analyzing...
-                </>
-              ) : (
-                "Analyze"
+    <form
+      className="rounded-2xl border border-white/20 shadow-xl p-6 md:p-8 backdrop-blur-md bg-white/5 mb-4 relative max-w-4xl w-full mx-auto"
+      onSubmit={e => { e.preventDefault(); handleClick(); }}
+      autoComplete="off"
+    >
+      {/* Model selection dropdown (Headless UI Listbox) */}
+      <div className="mb-2 flex flex-col md:flex-row items-center gap-2 w-full">
+        <label htmlFor="model-select" className="inter-medium text-white/80 min-w-[70px]">
+          Model:
+        </label>
+        <div className="w-full md:w-auto">
+          <Listbox value={model} onChange={setModel} disabled={loading || deepUnavailable}>
+            <div className="relative mt-1">
+              <Listbox.Button className="relative w-full cursor-pointer rounded-xl bg-[#181A1B]/80 py-2 pl-4 pr-10 text-left text-white shadow focus:outline-none focus:ring-2 focus:ring-[#FFD700] border border-white/20 hover:border-[#FFD700] focus:border-[#FFD700] transition-all duration-200 backdrop-blur-md">
+                <span className="block truncate inter-regular">
+                  {modelOptions.find((opt) => opt.value === model)?.label}
+                </span>
+                <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                  <ChevronUpDownIcon className="h-5 w-5 text-[#FFD700]" aria-hidden="true" />
+                </span>
+              </Listbox.Button>
+              {deepUnavailable && (
+                <div className="absolute left-0 mt-2 text-xs text-red-400 bg-[#181A1B]/90 px-3 py-1 rounded shadow z-20">
+                  Deep learning model is unavailable on this server. Only rule-based analysis is enabled.
+                </div>
               )}
-            </button>
-          </>
-        ) : (
-          <div className="flex flex-col items-center justify-center">
-            <video
-              ref={videoRef}
-              autoPlay
-              muted
-              playsInline
-              width="320"
-              height="240"
-              className="rounded-md border"
-            />
-            {!scanning ? (
-              <div className="mt-4 flex gap-2">
-                <button
-                  onClick={startFaceScan}
-                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                >
-                  Start Face Scan (5s)
-                </button>
-                <button
-                  onClick={stopCamera}
-                  className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-                >
-                  Close Camera
-                </button>
-              </div>
-            ) : (
-              <p className="mt-4 text-sm text-gray-500">
-                Scanning your expression...
-              </p>
-            )}
-          </div>
+              <Transition
+                as={Fragment}
+                leave="transition ease-in duration-100"
+                leaveFrom="opacity-100"
+                leaveTo="opacity-0"
+              >
+                <Listbox.Options className="absolute z-10 mt-2 max-h-60 w-full min-w-[260px] overflow-auto rounded-xl bg-[#181A1B]/95 py-2 shadow-xl ring-1 ring-[#FFD700]/30 border border-[#FFD700]/40 focus:outline-none backdrop-blur-md">
+                  {modelOptions.map((option) => (
+                    <Listbox.Option
+                      key={option.value}
+                      className={({ active, selected }) =>
+                        `relative cursor-pointer select-none py-3 pl-10 pr-4 inter-regular text-base rounded-lg transition-all duration-150
+                        ${active ? 'bg-[#FFD700]/10 text-[#FFD700]' : 'text-white/90'}
+                        ${selected ? 'font-bold bg-[#FFD700]/20 text-[#FFD700]' : ''}`
+                      }
+                      value={option.value}
+                    >
+                      {({ selected }) => (
+                        <>
+                          <span className={`block truncate ${selected ? 'font-bold' : ''}`}>{option.label}</span>
+                          {selected ? (
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+                              <CheckIcon className="h-5 w-5 text-[#FFD700]" aria-hidden="true" />
+                            </span>
+                          ) : null}
+                        </>
+                      )}
+                    </Listbox.Option>
+                  ))}
+                </Listbox.Options>
+              </Transition>
+            </div>
+          </Listbox>
+        </div>
+        {model === "deep" && (
+          <span className="text-xs text-yellow-400 ml-2 inter-regular">
+            Advanced AI model will only work locally when it is installed.
+          </span>
         )}
       </div>
-
-      {faceResult.length > 0 && (
-        <div className="mb-10">
-          <h3 className="text-lg font-semibold mb-4 text-center">
-            Face Emotion Timeline (5s)
-          </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 justify-center">
-            {faceResult.map((entry, i) => (
-              <div
-                key={i}
-                className="p-4 rounded-lg shadow bg-white dark:bg-gray-800 text-center border dark:border-gray-600"
-              >
-                <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">
-                  {entry.time}
-                </p>
-                <p className="text-xl mt-2 capitalize">
-                  {entry.emoji} {entry.emotion}
-                </p>
-                {/* <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Confidence: {entry.confidence}%
-                </p> */}
-              </div>
-            ))}
+      <textarea
+        className="w-full h-32 p-3 border border-white/20 rounded-xl shadow-sm resize-none text-white bg-[#181A1B] inter-regular focus:ring-2 focus:ring-accent focus:border-accent transition placeholder-white/40"
+        placeholder="Type or speak a paragraph..."
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        disabled={loading}
+      />
+      <div className="flex flex-col sm:flex-row items-center justify-between mt-3 w-full gap-3">
+        <button
+          type="submit"
+          className="flex-1 px-6 py-2 bg-gradient-to-r from-[#FFD700] to-[#FFB300] text-black rounded-full unbounded-bold shadow hover:from-[#FFB300] hover:to-[#FFD700] hover:scale-105 transition-all duration-200 border-2 border-[#FFD700]/60 focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-60"
+          disabled={loading || !text.trim()}
+        >
+          Analyze
+        </button>
+        {listening ? (
+          <div className="flex items-center gap-2">
+            <span className="animate-pulse rounded-full border-2 border-[#FFD700] bg-[#FFD700]/10 p-2">
+              <Mic className="text-[#FFD700] w-6 h-6" />
+            </span>
+            <button type="button" onClick={stopListening} className="flex items-center gap-2 px-4 py-2 rounded-xl font-bold bg-[#181A1B] border-2 border-red-500 shadow-[0_0_8px_2px_rgba(239,68,68,0.3)] text-red-400 hover:bg-red-600/20 hover:border-red-400 hover:text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500">
+              Stop Listening
+            </button>
           </div>
-        </div>
-      )}
-    </>
+        ) : (
+          <button type="button" onClick={startListening} className="p-2 rounded-full border border-white/20 bg-white/10 hover:bg-[#FFD700]/10 transition">
+            <Mic className="text-white w-6 h-6" />
+          </button>
+        )}
+      </div>
+      {/* Onboarding/Help Text as a bulleted list (now below controls) */}
+      <div className="mt-4">
+        <ul className="list-disc list-inside space-y-1 inter-regular text-white/80 text-base">
+          <li>Enter or speak your text below.</li>
+          <li>Choose a model for analysis.</li>
+          <li>Click <span className="text-[#FFD700] font-bold">Analyze</span> to see results.</li>
+          <li><span className="text-[#FFD700] font-bold">Tip:</span> Use the mic for hands-free input!</li>
+        </ul>
+      </div>
+    </form>
   );
 };
 

@@ -1,7 +1,7 @@
 # models.py
 
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 class SentimentRequest(BaseModel):
     paragraph: str
@@ -11,6 +11,7 @@ class SentenceSentiment(BaseModel):
     sentiment: str
     score: float
     confidence: Optional[float] = None
+    distribution: Optional[Dict[str, float]] = None
 
 class ParagraphSentiment(BaseModel):
     sentiment: str
