@@ -74,7 +74,7 @@ const InputBox = ({ onAnalyze, loading, model = "rule", setModel }) => {
   return (
     <form
       className="rounded-2xl border border-white/20 shadow-xl p-6 md:p-8 backdrop-blur-md bg-white/5 mb-4 relative max-w-4xl w-full mx-auto"
-      onSubmit={e => { e.preventDefault(); handleClick(); }}
+      onSubmit={e => { if (e) e.preventDefault(); handleClick(); }}
       autoComplete="off"
     >
       {/* Model selection dropdown (Headless UI Listbox) */}
@@ -148,7 +148,7 @@ const InputBox = ({ onAnalyze, loading, model = "rule", setModel }) => {
       <div className="flex flex-col sm:flex-row items-center justify-between mt-3 w-full gap-3">
         <button
           type="submit"
-          className="flex-1 px-6 py-2 bg-gradient-to-r from-[#FFD700] to-[#FFB300] text-black rounded-full unbounded-bold shadow hover:from-[#FFB300] hover:to-[#FFD700] hover:scale-105 transition-all duration-200 border-2 border-[#FFD700]/60 focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-60"
+          className="w-[90%] px-6 py-2 bg-[#FFD700] text-black rounded-full unbounded-bold shadow-lg hover:scale-105 transition-all duration-200 border-2 border-[#FFD700]/80 focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-60"
           disabled={loading || !text.trim()}
         >
           Analyze

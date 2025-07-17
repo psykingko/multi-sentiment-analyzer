@@ -1,7 +1,5 @@
-import { lazy, Suspense } from "react";
 import { motion } from "framer-motion";
-
-const FaceSentiment = lazy(() => import("../components/FaceSentiment"));
+import FaceSentiment from "../components/FaceSentiment";
 
 export default function FaceScanner() {
   return (
@@ -14,9 +12,7 @@ export default function FaceScanner() {
       >
         <h1 className="unbounded-black text-4xl md:text-6xl mb-6 tracking-widest text-white text-center">Face Scan</h1>
         <p className="inter-regular text-lg text-white/90 mb-6 text-center">Scan your face in real-time to detect emotions using your webcam.</p>
-        <Suspense fallback={<div className="text-center p-4">Loading face sentiment...</div>}>
-          <FaceSentiment />
-        </Suspense>
+        <FaceSentiment />
       </motion.div>
     </div>
   );

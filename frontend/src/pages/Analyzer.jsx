@@ -1,10 +1,10 @@
 import InputBox from "../components/InputBox";
-import { useState, lazy, Suspense } from "react";
+import { useState } from "react";
 import axios from "axios";
 import Tooltip from '../components/Tooltip'; // Assume Tooltip exists or will be created
-
-const SentimentResult = lazy(() => import("../components/SentimentResult"));
-const Summary = lazy(() => import("../components/Summary"));
+import PeekingRobo from "../components/PeekingRobo";
+import SentimentResult from "../components/SentimentResult";
+import Summary from "../components/Summary";
 
 const instructions = [
   "Select the analysis model (Rule-Based or Deep Learning).",
@@ -19,6 +19,7 @@ export default function Analyzer() {
   const [result, setResult] = useState(null);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [glow, setGlow] = useState(false);
 
   async function handleAnalyze(text, selectedModel) {
     setLoading(true);
@@ -30,6 +31,8 @@ export default function Analyzer() {
       setResult(response.data.results);
       setSummary(response.data.paragraph_sentiment);
       setHasResults(true);
+      setGlow(true);
+      setTimeout(() => setGlow(false), 2500);
     } catch (error) {
       alert("Analysis failed. Please try again.");
       setHasResults(false);
@@ -47,23 +50,27 @@ export default function Analyzer() {
           <InputBox model={model} setModel={setModel} onAnalyze={handleAnalyze} loading={loading} />
         </div>
         {/* Sentiment Results directly below input if present */}
-        {hasResults && (
-          <section className="w-full max-w-4xl mx-auto mt-8 mb-10">
-            <div className="rounded-2xl border border-white/20 shadow-xl p-8 backdrop-blur-md bg-white/5 text-white">
+        <section className="w-full max-w-4xl mx-auto mt-8 mb-10">
+          {/* Only show PeekingRobo for now if you want, or remove if not needed */}
+          {hasResults && (
+            <div className={`rounded-2xl border border-white/20 shadow-xl p-8 backdrop-blur-md bg-white/5 text-white transition-all duration-700 ${glow ? 'ring-4 ring-[#FFD700] ring-opacity-60 shadow-yellow-400/40' : ''}`}>
               <h2 className="unbounded-bold text-2xl mb-4 text-[#FFD700]">Sentiment Results</h2>
-              <Suspense fallback={<div className="text-center p-4">Loading results...</div>}>
-                <SentimentResult data={result} />
-              </Suspense>
+              <SentimentResult data={result} />
               {summary && (
-                <div className="mt-6">
-                  <Suspense fallback={<div className="text-center p-4">Loading summary...</div>}>
-                    <Summary summary={summary} />
-                  </Suspense>
-                </div>
+                <>
+                  <div className="mt-10">
+                    <h2 className="unbounded-bold text-2xl mb-6 text-[#FFD700] text-left">Paragraph Mental State & Distribution</h2>
+                    <Summary summary={summary} section="distribution" />
+                  </div>
+                  <div className="mt-10">
+                    <h2 className="unbounded-bold text-2xl mb-6 text-[#FFD700] text-left">Paragraph Summary</h2>
+                    <Summary summary={summary} section="summary" />
+                  </div>
+                </>
               )}
             </div>
-          </section>
-        )}
+          )}
+        </section>
       </section>
       {/* Divider */}
       <hr className="w-full max-w-4xl my-10 border-0 h-1 bg-gradient-to-r from-transparent via-[#FFD700] to-transparent shadow-[0_0_8px_2px_#FFD70044] rounded-full" />

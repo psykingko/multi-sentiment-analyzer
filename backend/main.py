@@ -20,6 +20,11 @@ from app.services.sentiment_rule import (
     is_english
 )
 from app.services.ml_model import analyze_sentiment_bert
+from dotenv import load_dotenv
+load_dotenv()
+import os
+print("ENABLE_DEEP_LEARNING:", os.environ.get("ENABLE_DEEP_LEARNING"))
+from collections import Counter
 
 app = FastAPI()
 
@@ -52,6 +57,7 @@ def analyze_sentiment_api(request: SentimentRequest, model: str = Query("rule", 
         total_score = 0.0
         total_confidence = 0.0
         emotion_counts = {}
+        all_emotions = []
 
         for sentence in sentences:
             if model == "deep":
@@ -75,6 +81,7 @@ def analyze_sentiment_api(request: SentimentRequest, model: str = Query("rule", 
                         distribution = bert_result.get("distribution")
                         # Count emotions for summary
                         emotion_counts[sentiment] = emotion_counts.get(sentiment, 0) + 1
+                        all_emotions.append(sentiment)
             else:
                 # Use rule-based model
                 cleaned = clean_text(sentence)
@@ -92,6 +99,7 @@ def analyze_sentiment_api(request: SentimentRequest, model: str = Query("rule", 
                     sentiment = classify_sentiment(avg_score)
                     print(f"[DEBUG] Classified: {sentiment}")
                     distribution = None
+                    all_emotions.append(sentiment)
             total_score += avg_score
             total_confidence += confidence
 
@@ -111,12 +119,29 @@ def analyze_sentiment_api(request: SentimentRequest, model: str = Query("rule", 
         else:
             paragraph_sentiment = classify_sentiment(avg_paragraph_score)
 
+        # --- New fields ---
+        paragraph_text = request.paragraph
+        word_count = len(paragraph_text.split())
+        char_count = len(paragraph_text)
+        # Mental state: most common emotion/sentiment
+        if all_emotions:
+            mental_state = Counter(all_emotions).most_common(1)[0][0]
+            total = len(all_emotions)
+            mental_state_distribution = {k: v / total for k, v in Counter(all_emotions).items()}
+        else:
+            mental_state = None
+            mental_state_distribution = None
+
         return SentimentResponse(
             results=sentence_results,
             paragraph_sentiment=ParagraphSentiment(
                 sentiment=paragraph_sentiment,
                 average_score=avg_paragraph_score,
-                confidence=avg_paragraph_confidence
+                confidence=avg_paragraph_confidence,
+                word_count=word_count,
+                char_count=char_count,
+                mental_state=mental_state,
+                mental_state_distribution=mental_state_distribution
             )
         )
 

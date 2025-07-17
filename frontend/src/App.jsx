@@ -2,6 +2,7 @@
 import { Routes, Route } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import Layout from "./components/Layout";
+import SplashScreen from "./components/SplashScreen";
 
 const Home = lazy(() => import("./pages/Home"));
 const Analyzer = lazy(() => import("./pages/Analyzer"));
@@ -10,7 +11,7 @@ const Insights = lazy(() => import("./pages/Insights"));
 
 function App() {
   return (
-    <Suspense fallback={<div className="text-center p-10">Loading...</div>}>
+    <Suspense fallback={<SplashScreen />}>
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />

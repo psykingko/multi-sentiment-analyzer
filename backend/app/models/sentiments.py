@@ -17,6 +17,10 @@ class ParagraphSentiment(BaseModel):
     sentiment: str
     average_score: float
     confidence: Optional[float] = None
+    word_count: Optional[int] = None
+    char_count: Optional[int] = None
+    mental_state: Optional[str] = None
+    mental_state_distribution: Optional[Dict[str, float]] = None
 
 class SentimentResponse(BaseModel):
     results: List[SentenceSentiment]

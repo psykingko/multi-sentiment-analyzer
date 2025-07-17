@@ -57,7 +57,7 @@ const EMOTION_ICONS = {
   ),
 };
 
-const Summary = ({ summary }) => {
+const Summary = ({ summary, section }) => {
   const [animatedCounts, setAnimatedCounts] = useState({});
 
   useEffect(() => {
@@ -88,44 +88,16 @@ const Summary = ({ summary }) => {
   }, [summary]);
 
   if (!summary) return null;
-  const { sentiment: overall_sentiment, average_score, sentiment_counts } = summary;
-  const data = Object.entries(sentiment_counts || {}).map(([name, value]) => ({ name, value }));
+  const { sentiment: overall_sentiment, average_score, word_count, char_count, mental_state, mental_state_distribution } = summary;
+  const data = mental_state_distribution
+    ? Object.entries(mental_state_distribution).map(([name, value]) => ({ name, value }))
+    : [];
 
-  return (
-    <div className="w-full max-w-5xl mx-auto">
-      <motion.div
-        className="mt-10 w-full max-w-5xl mx-auto relative flex flex-col"
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-      >
-        <h2 className="unbounded-bold text-xl mb-4 z-10 relative text-white text-left">Paragraph Summary</h2>
-        <motion.div
-          className="bg-[#181A1B] border border-[#2e3236] shadow-xl rounded-2xl p-8 mb-8 flex flex-row justify-between items-center w-full max-w-5xl"
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 200, damping: 20 }}
-          whileHover={{ scale: 1.01, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}
-          style={{ zIndex: 1 }}
-        >
-          <motion.span
-            className=" min-w-0 px-3 py-3 rounded-full unbounded-bold text-lg shadow mb-4 md:mb-0 md:mr-10 inline-block border-4 border-[#23272b] text-white flex items-center justify-center"
-            style={{
-              backgroundColor: EMOTION_COLORS[overall_sentiment] + "22",
-              color: EMOTION_COLORS[overall_sentiment] || "#fff",
-              borderColor: EMOTION_COLORS[overall_sentiment] || "#23272b",
-            }}
-            initial={{ scale: 0.7, opacity: 0 }}
-            animate={{ scale: 1.15, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 300, damping: 15, delay: 0.1 }}
-          >
-            {EMOTION_ICONS[overall_sentiment] || "🔎"} {overall_sentiment}
-          </motion.span>
-          <div className="flex-1 min-w-0 flex items-center justify-center">
-            <span className="text-lg unbounded-bold text-white">Average Score: <span className="font-mono">{average_score}</span></span>
-          </div>
-        </motion.div>
-        <div className="h-80 z-10 relative w-full max-w-2xl">
+  // Only show pie chart and legend for 'distribution' section
+  if (section === 'distribution') {
+    return (
+      <div className="flex flex-col items-center justify-center w-full max-w-2xl mx-auto mt-8 mb-4">
+        <div className="h-80 w-full flex items-center justify-center">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
@@ -137,9 +109,7 @@ const Summary = ({ summary }) => {
                 fill="#8884d8"
                 dataKey="value"
                 isAnimationActive={true}
-                label={({ name, percent }) =>
-                  `${EMOTION_ICONS[name] || ""} ${name}: ${(percent * 100).toFixed(0)}%`
-                }
+                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
               >
                 {data.map((entry, index) => (
                   <Cell
@@ -155,26 +125,76 @@ const Summary = ({ summary }) => {
                   active && payload && payload.length ? (
                     <div className="bg-[#23272b] rounded-full shadow-lg px-4 py-2 border border-[#2e3236] animate-fade-in flex items-center gap-2 min-w-0 max-w-xs mx-auto text-base inter-semibold text-white"
                       style={{ pointerEvents: 'none', minWidth: 'unset', maxWidth: 180 }}>
-                      <span className="text-xl">{EMOTION_ICONS[payload[0].name] || ""}</span>
+                      <span className="text-xl">{EMOTION_ICONS[payload[0].name] || ''}</span>
                       <span>{payload[0].name}</span>
-                      <span className="ml-2 font-mono">{payload[0].value}</span>
+                      <span className="ml-2 font-mono">{(payload[0].percent * 100).toFixed(1)}%</span>
                     </div>
                   ) : null
                 }
               />
-              <Legend
-                iconType="circle"
-                formatter={(value) => (
-                  <span style={{ color: EMOTION_COLORS[value] || "#fff", fontWeight: 600 }}>
-                    {EMOTION_ICONS[value] || ""} {value}
-                  </span>
-                )}
-              />
             </PieChart>
           </ResponsiveContainer>
         </div>
-      </motion.div>
-    </div>
+        {/* Custom Legend below the chart */}
+        <div className="flex flex-wrap justify-center gap-6 mt-6">
+          {data.map((entry, idx) => (
+            <div
+              key={entry.name}
+              className="flex flex-col items-center px-4 py-2 rounded-xl shadow border border-[#2e3236] bg-[#181A1B]"
+              style={{ minWidth: 90, boxShadow: '0 0 8px 1px ' + (EMOTION_COLORS[entry.name] || '#FFD700') + '44' }}
+            >
+              <span className="text-2xl mb-1" style={{ color: EMOTION_COLORS[entry.name] }}>{EMOTION_ICONS[entry.name]}</span>
+              <span className="unbounded-bold text-base" style={{ color: EMOTION_COLORS[entry.name] }}>{entry.name}</span>
+              <span className="font-mono text-[#FFD700] text-lg">{(entry.value * 100).toFixed(0)}%</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Only show summary cards for 'summary' section
+  if (section === 'summary') {
+    return (
+      <div className="w-full max-w-5xl mx-auto">
+        <div className="flex flex-wrap gap-6 mb-8">
+          {/* Word Count Card */}
+          <div className="flex-1 min-w-[160px] bg-[#181A1B] border border-cyan-400/40 rounded-xl p-6 mb-4 shadow-lg transition-all hover:shadow-cyan-400/20 max-w-2xl mx-auto flex flex-col items-center justify-center text-white">
+            <span className="text-lg font-semibold mb-1 tracking-wide text-cyan-200">Words</span>
+            <span className="text-3xl font-mono text-[#FFD700]">{word_count}</span>
+          </div>
+          {/* Char Count Card */}
+          <div className="flex-1 min-w-[160px] bg-[#181A1B] border border-cyan-400/40 rounded-xl p-6 mb-4 shadow-lg transition-all hover:shadow-cyan-400/20 max-w-2xl mx-auto flex flex-col items-center justify-center text-white">
+            <span className="text-lg font-semibold mb-1 tracking-wide text-cyan-200">Characters</span>
+            <span className="text-3xl font-mono text-[#FFD700]">{char_count}</span>
+          </div>
+          {/* Mental State Card */}
+          <div className="flex-1 min-w-[160px] bg-[#181A1B] border border-cyan-400/40 rounded-xl p-6 mb-4 shadow-lg transition-all hover:shadow-cyan-400/20 max-w-2xl mx-auto flex flex-col items-center justify-center text-white">
+            <span className="text-lg font-semibold mb-1 tracking-wide text-cyan-200">Mental State</span>
+            <span className="flex items-center gap-2 text-2xl font-bold mt-1" style={{color: EMOTION_COLORS[mental_state] || '#FFD700'}}>
+              {EMOTION_ICONS[mental_state] || '🔎'} {mental_state || 'N/A'}
+            </span>
+          </div>
+        </div>
+        {/* Average Score Card */}
+        <div className="flex flex-wrap gap-6 mb-8">
+          <div className="flex-1 min-w-[160px] bg-[#181A1B] border border-cyan-400/40 rounded-xl p-6 mb-4 shadow-lg transition-all hover:shadow-cyan-400/20 max-w-2xl mx-auto flex flex-col items-center justify-center text-white">
+            <span className="text-lg font-semibold mb-1 tracking-wide text-cyan-200">Average Score</span>
+            <span className="text-3xl font-mono text-[#FFD700]">{average_score}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Default: show both (for backward compatibility)
+  return (
+    <>
+      {/* Distribution */}
+      <Summary summary={summary} section="distribution" />
+      {/* Summary */}
+      <Summary summary={summary} section="summary" />
+    </>
   );
 };
 

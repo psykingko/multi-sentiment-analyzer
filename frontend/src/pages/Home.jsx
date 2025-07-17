@@ -3,7 +3,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { useState, useEffect } from "react";
 import React from "react"; // Added for React.cloneElement
 import OldBackground from '../components/OldBackground';
-// import HolographicCubesBackground from '../components/HolographicCubesBackground';
+import { FileText, Smile, ShieldCheck, Users } from "lucide-react";
 
 const features = [
   {
@@ -78,6 +78,13 @@ const animatedStats = [
   { label: "Active Users", value: 1247, suffix: "+", color: "#4A5F5D" },
 ];
 
+const statIcons = [
+  <FileText size={32} aria-label="Texts Analyzed" key="texts" />, // 15420+
+  <Smile size={32} aria-label="Emotions Detected" key="emotions" />, // 8920+
+  <ShieldCheck size={32} aria-label="Accuracy Rate" key="accuracy" />, // 98%
+  <Users size={32} aria-label="Active Users" key="users" />, // 1247+
+];
+
 const faqData = [
   {
     question: "What is sentiment analysis?",
@@ -119,78 +126,59 @@ function PlayIcon() {
 // Animated Counter Component
 function AnimatedCounter({ end, suffix = "", duration = 2 }) {
   const [count, setCount] = useState(0);
-  const [isInView, setIsInView] = useState(false);
 
   useEffect(() => {
-    if (isInView) {
-      let startTime = null;
-      const animate = (currentTime) => {
-        if (!startTime) startTime = currentTime;
-        const progress = Math.min((currentTime - startTime) / (duration * 1000), 1);
-        const currentCount = Math.floor(progress * end);
-        setCount(currentCount);
-        
-        if (progress < 1) {
-          requestAnimationFrame(animate);
-        }
-      };
-      requestAnimationFrame(animate);
-    }
-  }, [isInView, end, duration]);
+    let startTime = null;
+    const animate = (currentTime) => {
+      if (!startTime) startTime = currentTime;
+      const progress = Math.min((currentTime - startTime) / (duration * 1000), 1);
+      const currentCount = Math.floor(progress * end);
+      setCount(currentCount);
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+    requestAnimationFrame(animate);
+  }, [end, duration]);
 
   return (
-    <motion.span
-      onViewportEnter={() => setIsInView(true)}
-      className="unbounded-bold text-3xl"
-    >
+    <span className="unbounded-bold text-3xl">
       {count}{suffix}
-    </motion.span>
+    </span>
   );
 }
 
 // FAQ Item Component
 function FAQItem({ question, answer, isOpen, onToggle }) {
   return (
-    <motion.div
+    <div
       className="border border-white/20 rounded-2xl overflow-hidden backdrop-blur-sm"
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.01 }}
-      whileHover={{ 
-        scale: 1.02,
-        boxShadow: "0 0 30px rgba(0, 255, 204, 0.2)",
-        borderColor: '#FFD700'
-      }}
-      transition={{ duration: 0.3 }}
     >
       <button
         onClick={onToggle}
         className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-white/5 transition-colors"
       >
         <h4 className="unbounded-regular text-lg text-white font-medium">{question}</h4>
-        <motion.svg
+        <svg
           width="20"
           height="20"
           fill="none"
           stroke="#00FFCC"
           strokeWidth="2"
-          animate={{ rotate: isOpen ? 180 : 0 }}
-          transition={{ duration: 0.3 }}
+          style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s' }}
         >
           <polyline points="6,9 12,15 18,9"></polyline>
-        </motion.svg>
+        </svg>
       </button>
-      <motion.div
-        initial={false}
-        animate={{ height: isOpen ? "auto" : 0, opacity: isOpen ? 1 : 0 }}
-        transition={{ duration: 0.3 }}
+      <div
+        style={{ height: isOpen ? 'auto' : 0, opacity: isOpen ? 1 : 0, transition: 'height 0.3s, opacity 0.3s' }}
         className="overflow-hidden"
       >
         <div className="px-6 pb-4">
           <p className="inter-regular text-white/80 leading-relaxed">{answer}</p>
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }
 
@@ -263,9 +251,6 @@ export default function Home() {
           Multi-Sentiment Analyzer
         </motion.h1>
         <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.35 }}
           className="inter-regular text-lg md:text-2xl text-white/90 mb-10 max-w-2xl mx-auto text-center"
         >
           Analyze text, voice, and facial expressions for sentiment and emotion using state-of-the-art AI.
@@ -279,7 +264,7 @@ export default function Home() {
               borderColor: '#FFD700'
             }}
             whileTap={{ scale: 0.98 }}
-            transition={{ duration: 0.3 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20, duration: 0.15 }}
           >
             <Link
               to="/analyze"
@@ -296,7 +281,7 @@ export default function Home() {
               borderColor: '#FFD700'
             }}
             whileTap={{ scale: 0.98 }}
-            transition={{ duration: 0.3 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20, duration: 0.15 }}
           >
             <Link
               to="/face-scan"
@@ -309,47 +294,31 @@ export default function Home() {
       </section>
       {/* 1. Why Choose Multi-Sentiment Analyzer? (feature cards) */}
       <section className="w-full max-w-4xl mx-auto mb-16 px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.01 }}
-          transition={{ duration: 0.3, type: 'spring' }}
+        <div
           className="unbounded-bold text-3xl md:text-4xl mb-10 tracking-widest text-white text-center rounded-2xl py-6 px-2 shadow-xl"
         >
           Why Choose Multi-Sentiment Analyzer?
-        </motion.div>
+        </div>
         {/* Feature cards outer box */}
-        <motion.div
+        <div
           className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12"
-          transition={{ duration: 0.3, type: 'spring' }}
         >
           {features.map((f, i) => (
             <motion.div
               key={f.title}
               className="rounded-2xl border border-white/20 shadow-xl p-6 flex flex-col items-center text-center backdrop-blur-md bg-white/5 cursor-pointer border border-white/20"
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.01 }}
-              transition={{ duration: 0.3, type: 'spring' }}
-              whileHover={{
-                scale: 1.015,
-                borderColor: '#FFD700'
-              }}
-              whileTap={{ scale: 0.99 }}
+              whileHover={{ scale: 1.01, borderColor: '#FFD700' }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 20, duration: 0.6 }}
             >
-              <motion.div 
-                className="mb-4"
-                whileHover={{ scale: 1.05 }}
-                transition={{ duration: 0.3 }}
-              >
+              <div className="mb-4">
                 {f.icon}
-              </motion.div>
+              </div>
               <h3 className="unbounded-bold text-xl mb-2 text-white">{f.title}</h3>
               <p className="inter-regular text-base text-white/80">{f.desc}</p>
             </motion.div>
           ))}
-        </motion.div>
-        
+        </div>
       </section>
       <div className="w-full my-10 flex justify-center">
           <div className="h-0.5 w-3/4 bg-gradient-to-r from-transparent via-[#FFD700] to-transparent shadow-[0_0_8px_2px_#FFD70044] rounded-full" />
@@ -357,24 +326,18 @@ export default function Home() {
       
       {/* 2. How it works (two cards: Text Analyzer and Face Scan) */}
       <section className="w-full max-w-4xl mx-auto mb-16 px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.01 }}
-          transition={{ duration: 0.3, type: 'spring' }}
-            className="unbounded-bold text-3xl md:text-4xl mb-10 tracking-widest text-white text-center rounded-2xl py-6 px-2 shadow-xl"
+        <div
+          className="unbounded-bold text-3xl md:text-4xl mb-10 tracking-widest text-white text-center rounded-2xl py-6 px-2 shadow-xl"
         >
           How it works
-        </motion.div>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Text Analyzer Card */}
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.01 }}
-            transition={{ duration: 0.3, type: 'spring' }}
-            whileHover={{ scale: 1.015, borderColor: '#FFD700' }}
             className="rounded-2xl border border-white/20 shadow-xl p-8 flex flex-col bg-white/5 backdrop-blur-md"
+            whileHover={{ scale: 1.01, borderColor: '#FFD700' }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: 'spring', stiffness: 600, damping: 18 }}
           >
             <h3 className="unbounded-bold text-2xl mb-4 text-[#FFD700] text-center">Text Analyzer</h3>
             <ol className="list-decimal list-inside inter-regular text-white/90 space-y-2">
@@ -386,12 +349,10 @@ export default function Home() {
           </motion.div>
           {/* Face Scan Card */}
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.01 }}
-            transition={{ duration: 0.3, type: 'spring' }}
-                whileHover={{ scale: 1.015, borderColor: '#FFD700' }}
             className="rounded-2xl border border-white/20 shadow-xl p-8 flex flex-col bg-white/5 backdrop-blur-md"
+            whileHover={{ scale: 1.01, borderColor: '#FFD700' }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: 'spring', stiffness: 600, damping: 18 }}
           >
             <h3 className="unbounded-bold text-2xl mb-4 text-[#FFD700] text-center">Face Scan</h3>
             <ol className="list-decimal list-inside inter-regular text-white/90 space-y-2">
@@ -408,25 +369,19 @@ export default function Home() {
         </div>
       {/* 3. AI Models Powering Our Analysis (AI model cards) */}
       <section className="w-full max-w-4xl mx-auto mb-16 px-4">
-      <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.01 }}
-          transition={{ duration: 0.3, type: 'spring' }}
+      <div
           className="unbounded-bold text-3xl md:text-4xl mb-10 tracking-widest text-white text-center rounded-2xl py-6 px-2 shadow-xl"
         >
           AI Models Powering Our Analysis
-        </motion.div>
+        </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {aiModels.map((model, i) => (
               <motion.div
                 key={model.name}
                 className="rounded-2xl p-8 backdrop-blur-md border border-white/20 shadow-xl bg-white/5 flex flex-col justify-between items-center h-full"
-                initial={{ opacity: 0, x: i % 2 === 0 ? -20 : 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, amount: 0.01 }}
-                transition={{ duration: 0.3, type: 'spring' }}
                 whileHover={{ scale: 1.015, borderColor: '#FFD700' }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20, duration: 0.15 }}
               >
                {/* Golden Donut Chart for Accuracy */}
                
@@ -461,64 +416,47 @@ export default function Home() {
         </div>
       {/* 5. Our Impact in Numbers (animated stats) */}
       <section className="w-full max-w-4xl mx-auto mb-16 px-4">
-      <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.01 }}
-          transition={{ duration: 0.3, type: 'spring' }}
+      <div
           className="unbounded-bold text-3xl md:text-4xl mb-10 tracking-widest text-white text-center rounded-2xl py-6 px-2 shadow-xl "
         >
           Our Impact in Numbers
-        </motion.div>
+        </div>
           <div className="grid grid-cols-2  md:grid-cols-4 gap-6">
             {animatedStats.map((stat, i) => (
               <motion.div
                 key={stat.label}
-                className="text-center rounded-2xl border border-white/20  bg-white/5 backdrop-blur-md shadow-xl p-4"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.01 }}
-                transition={{smooth: true, duration: 0.3 }}
-                whileHover={{ scale: 1.05, color: stat.color, borderColor: '#FFD700' }}
+                className="text-center rounded-2xl border border-white/20 bg-white/5 backdrop-blur-md shadow-xl p-4 transition-all focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.15 }}
+                whileHover={{ scale: 1.05, boxShadow: "0 0 20px #FFD70088", borderColor: '#FFD700' }}
+                aria-label={`${stat.value}${stat.suffix} ${stat.label}`}
+                tabIndex={0}
               >
-                <div className="mb-2 ">
-                  <AnimatedCounter 
-                    end={stat.value} 
-                    suffix={stat.suffix} 
-                    duration={2.5}
-                  />
-                </div>
+                <div className="flex justify-center mb-2 text-gold-400" aria-hidden="true">{statIcons[i]}</div>
+                <AnimatedCounter end={stat.value} suffix={stat.suffix} duration={2.5} />
                 <p className="inter-regular text-sm text-white/70">{stat.label}</p>
               </motion.div>
             ))}
           </div>
-        
-        
       </section>
       <div className="w-full my-10 flex justify-center">
           <div className="h-0.5 w-3/4 bg-gradient-to-r from-transparent via-[#FFD700] to-transparent shadow-[0_0_8px_2px_#FFD70044] rounded-full" />
         </div>
       {/* 6. Frequently Asked Questions (FAQ) */}
       <section className="w-full max-w-4xl mx-auto mb-16 px-4">
-      <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.01 }}
-          transition={{ duration: 0.3, type: 'spring' }}
+      <div
           className="unbounded-bold text-3xl md:text-4xl mb-10 tracking-widest text-white text-center rounded-2xl py-6 px-2 shadow-xl "
         >
           Frequently Asked Questions
-        </motion.div>
+        </div>
           <div className="space-y-4">
             {faqData.map((faq, i) => (
               <motion.div
                 key={i}
                 className="inter rounded-2xl overflow-hidden backdrop-blur-md shadow bg-white/2"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.01 }}
                 whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.3 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 18 }}
               >
                 <FAQItem
                   question={faq.question}
