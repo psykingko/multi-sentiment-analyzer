@@ -138,13 +138,27 @@ const InputBox = ({ onAnalyze, loading, model = "rule", setModel }) => {
           </span>
         )}
       </div>
-      <textarea
-        className="w-full h-32 p-3 border border-white/20 rounded-xl shadow-sm resize-none text-white bg-[#181A1B] inter-regular focus:ring-2 focus:ring-accent focus:border-accent transition placeholder-white/40"
-        placeholder="Type or speak a paragraph..."
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        disabled={loading}
-      />
+      <div className="relative w-full">
+        <textarea
+          className="w-full h-32 p-3 pr-10 border border-white/20 rounded-xl shadow-sm resize-none text-white bg-[#181A1B] inter-regular focus:ring-2 focus:ring-accent focus:border-accent transition placeholder-white/40"
+          placeholder="Type or speak a paragraph..."
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          disabled={loading}
+        />
+        {text && (
+          <button
+            type="button"
+            aria-label="Clear text"
+            className="absolute top-2 right-3 text-white/60 hover:text-red-400 bg-transparent p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-red-400"
+            style={{ zIndex: 2 }}
+            onClick={() => setText("")}
+            tabIndex={0}
+          >
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2"><line x1="6" y1="6" x2="14" y2="14"/><line x1="14" y1="6" x2="6" y2="14"/></svg>
+          </button>
+        )}
+      </div>
       <div className="flex flex-col sm:flex-row items-center justify-between mt-3 w-full gap-3">
         <div className="flex w-full items-center gap-2">
           <button

@@ -416,3 +416,58 @@ function getIntensity(confidence) {
   if (confidence >= 40) return "Low";
   return "Very Low";
 }
+
+let faceapiLoaded = false;
+let faceapi;
+
+async function loadFaceApiModels() {
+  if (!faceapiLoaded) {
+    if (!faceapi) {
+      faceapi = await import('face-api.js');
+    }
+    const MODEL_URL = '/models';
+    await Promise.all([
+      faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+      faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
+      faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+    ]);
+    faceapiLoaded = true;
+  }
+}
+
+async function detectWithDeepModel(input) {
+  await loadFaceApiModels();
+  // input should be a video or canvas element
+  if (!input) return { emotion: 'No Face', confidence: 0 };
+  const detections = await faceapi.detectSingleFace(input, new faceapi.TinyFaceDetectorOptions()).withFaceExpressions();
+  if (!detections || !detections.expressions) {
+    return { emotion: 'No Face', confidence: 0 };
+  }
+  // Find the emotion with the highest probability
+  const expressions = detections.expressions;
+  let maxEmotion = 'neutral';
+  let maxValue = 0;
+  for (const [emotion, value] of Object.entries(expressions)) {
+    if (value > maxValue) {
+      maxEmotion = emotion;
+      maxValue = value;
+    }
+  }
+  return { emotion: capitalize(maxEmotion), confidence: Math.round(maxValue * 100) };
+}
+
+function capitalize(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+export async function detectFaceEmotion(mode, input) {
+  if (mode === 'deep') {
+    try {
+      return await detectWithDeepModel(input);
+    } catch (e) {
+      return { emotion: 'Deep model not available', confidence: 0 };
+    }
+  } else {
+    return predictEmotion(input);
+  }
+}

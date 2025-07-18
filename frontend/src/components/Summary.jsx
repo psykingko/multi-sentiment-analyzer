@@ -140,8 +140,8 @@ const Summary = ({ summary, section }) => {
           {data.map((entry, idx) => (
             <div
               key={entry.name}
-              className="flex flex-col items-center px-4 py-2 rounded-xl shadow border border-[#2e3236] bg-[#181A1B]"
-              style={{ minWidth: 90, boxShadow: '0 0 8px 1px ' + (EMOTION_COLORS[entry.name] || '#FFD700') + '44' }}
+              className="flex flex-col items-center justify-center w-36 h-36 rounded-xl shadow border border-[#2e3236] bg-[#181A1B]"
+              style={{ boxShadow: '0 0 8px 1px ' + (EMOTION_COLORS[entry.name] || '#FFD700') + '44' }}
             >
               <span className="text-2xl mb-1" style={{ color: EMOTION_COLORS[entry.name] }}>{EMOTION_ICONS[entry.name]}</span>
               <span className="unbounded-bold text-base" style={{ color: EMOTION_COLORS[entry.name] }}>{entry.name}</span>

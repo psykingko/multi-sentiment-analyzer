@@ -25,6 +25,7 @@ export default function Analyzer() {
   const [loading, setLoading] = useState(false);
   const [glow, setGlow] = useState(false);
   const [currentText, setCurrentText] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0); // Add this line
 
   async function handleAnalyze(text, selectedModel) {
     setLoading(true);
@@ -49,6 +50,7 @@ export default function Analyzer() {
             results: response.data.results,
             summary: response.data.paragraph_sentiment,
           });
+          setRefreshKey(prev => prev + 1); // Increment refreshKey after saving
         } catch (error) {
           console.error('Failed to save analysis:', error);
         }
@@ -71,7 +73,7 @@ export default function Analyzer() {
 
   return (
     <div className="flex flex-col items-center w-full min-h-screen bg-transparent px-2">
-      <h1 className="unbounded-bold text-4xl md:text-5xl mb-4 mt-8 tracking-widest text-white text-center drop-shadow-lg">Text Analyzer</h1>
+      <h1 className="unbounded-bold text-4xl md:text-5xl mb-8 mt-2 tracking-widest text-white text-center drop-shadow-lg">Text Analyzer</h1>
       
       <div className="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Analysis Section - centered with even spacing */}
@@ -142,7 +144,7 @@ export default function Analyzer() {
         {/* Recent Analysis Sidebar (sticky, right side) */}
         <div className="lg:col-span-1">
           <div className="sticky top-24">
-            <RecentAnalysis onSelectAnalysis={handleSelectAnalysis} />
+            <RecentAnalysis onSelectAnalysis={handleSelectAnalysis} refreshKey={refreshKey} />
           </div>
         </div>
       </div>

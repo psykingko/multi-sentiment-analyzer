@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { analysisHistory } from '../lib/supabase';
 import { Trash2, Clock, BarChart3 } from 'lucide-react';
 
-const RecentAnalysis = ({ onSelectAnalysis }) => {
+const RecentAnalysis = ({ onSelectAnalysis, refreshKey }) => {
   const { user } = useAuth();
   const [analyses, setAnalyses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,7 +14,7 @@ const RecentAnalysis = ({ onSelectAnalysis }) => {
     if (user) {
       loadRecentAnalyses();
     }
-  }, [user]);
+  }, [user, refreshKey]);
 
   const loadRecentAnalyses = async () => {
     try {
@@ -41,11 +41,14 @@ const RecentAnalysis = ({ onSelectAnalysis }) => {
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
-    
-    if (diffInHours < 1) return 'Just now';
-    if (diffInHours < 24) return `${diffInHours}h ago`;
-    if (diffInHours < 48) return 'Yesterday';
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+    if (diffMins < 2) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffHours < 48) return 'Yesterday';
     return date.toLocaleDateString();
   };
 
@@ -159,7 +162,7 @@ const RecentAnalysis = ({ onSelectAnalysis }) => {
             <p>No analyses yet. Start analyzing text to see your history here!</p>
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto space-y-2 pr-1 min-h-[330px] max-h-[340px]">
+          <div className="flex-1 overflow-y-auto space-y-2 pr-1 min-h-[340px] max-h-[350px]">
             <AnimatePresence>
               {analyses.map((analysis, index) => (
                 <motion.div

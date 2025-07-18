@@ -3,17 +3,20 @@ import FaceSentiment from "../components/FaceSentiment";
 
 export default function FaceScanner() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] bg-transparent">
-      <motion.div
-        className="w-full max-w-2xl rounded-2xl border border-white/20 shadow-xl p-8 mt-8 mb-12 backdrop-blur-md bg-white/5"
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, type: 'spring' }}
+    <div className="w-full min-h-screen flex flex-col items-center justify-center bg-transparent px-2">
+      {/* Hero Section */}
+      <section
+        className="w-full flex flex-col items-center justify-center flex-1 overflow-y-auto"
+        
       >
-        <h1 className="unbounded-black text-4xl md:text-6xl mb-6 tracking-widest text-white text-center">Face Scan</h1>
-        <p className="inter-regular text-lg text-white/90 mb-6 text-center">Scan your face in real-time to detect emotions using your webcam.</p>
+        <h1 className="unbounded-bold text-4xl md:text-5xl mb-4 tracking-widest text-white text-center drop-shadow-lg">
+          Face Scan
+        </h1>
         <FaceSentiment />
-      </motion.div>
+      </section>
+      {/* Divider */}
+      <hr className="w-full my-10 border-0 h-1 bg-gradient-to-r from-transparent via-[#FFD700] to-transparent shadow-[0_0_8px_2px_#FFD70044] rounded-full" />
+      {/* Analysis Results and How to Use will be rendered by FaceSentiment or below */}
     </div>
   );
 } 
