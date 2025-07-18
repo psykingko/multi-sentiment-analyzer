@@ -146,27 +146,42 @@ const InputBox = ({ onAnalyze, loading, model = "rule", setModel }) => {
         disabled={loading}
       />
       <div className="flex flex-col sm:flex-row items-center justify-between mt-3 w-full gap-3">
-        <button
-          type="submit"
-          className="w-[90%] px-6 py-2 bg-[#FFD700] text-black rounded-full unbounded-bold shadow-lg hover:scale-105 transition-all duration-200 border-2 border-[#FFD700]/80 focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-60"
-          disabled={loading || !text.trim()}
-        >
-          Analyze
-        </button>
-        {listening ? (
-          <div className="flex items-center gap-2">
-            <span className="animate-pulse rounded-full border-2 border-[#FFD700] bg-[#FFD700]/10 p-2">
-              <Mic className="text-[#FFD700] w-6 h-6" />
-            </span>
-            <button type="button" onClick={stopListening} className="flex items-center gap-2 px-4 py-2 rounded-xl font-bold bg-[#181A1B] border-2 border-red-500 shadow-[0_0_8px_2px_rgba(239,68,68,0.3)] text-red-400 hover:bg-red-600/20 hover:border-red-400 hover:text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500">
-              Stop Listening
-            </button>
-          </div>
-        ) : (
-          <button type="button" onClick={startListening} className="p-2 rounded-full border border-white/20 bg-white/10 hover:bg-[#FFD700]/10 transition">
-            <Mic className="text-white w-6 h-6" />
+        <div className="flex w-full items-center gap-2">
+          <button
+            type="submit"
+            className="transition-all duration-200 px-8 py-2 bg-[#FFD700] text-black rounded-full unbounded-bold shadow-lg hover:scale-105 border-2 border-[#FFD700]/80 focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-60 flex-grow text-center"
+            disabled={loading || !text.trim()}
+            style={{ minWidth: 120 }}
+          >
+            Analyze
           </button>
-        )}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {listening ? (
+              <>
+                {/* Animated mic with waves */}
+                <span className="relative flex items-center ml-1 mr-1">
+                  <span className="absolute inset-0 flex items-center justify-center">
+                    <span className="animate-ping absolute inline-flex h-8 w-8 rounded-full bg-[#FFD700]/40 opacity-75"></span>
+                    <span className="animate-pulse absolute inline-flex h-12 w-12 rounded-full border-2 border-[#FFD700]/30"></span>
+                  </span>
+                  <Mic className="text-[#FFD700] w-7 h-7 relative z-10" />
+                </span>
+                <button
+                  type="button"
+                  onClick={stopListening}
+                  className="px-3 py-2 rounded-md text-xs font-semibold bg-[#181A1B] border border-red-400 text-red-400 hover:bg-red-500/10 hover:text-white transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-red-500 whitespace-nowrap ml-1"
+                  style={{ minWidth: 90 }}
+                >
+                  Stop Listening
+                </button>
+              </>
+            ) : (
+              <button type="button" onClick={startListening} className="p-2 rounded-full border border-white/20 bg-white/10 hover:bg-[#FFD700]/10 transition ml-2">
+                <Mic className="text-white w-6 h-6" />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
       {/* Onboarding/Help Text as a bulleted list (now below controls) */}
       <div className="mt-4">
@@ -174,6 +189,7 @@ const InputBox = ({ onAnalyze, loading, model = "rule", setModel }) => {
           <li>Enter or speak your text below.</li>
           <li>Choose a model for analysis.</li>
           <li>Click <span className="text-[#FFD700] font-bold">Analyze</span> to see results.</li>
+          <li><span className="text-[#FFD700] font-bold">Scroll</span> down to check results.</li>
           <li><span className="text-[#FFD700] font-bold">Tip:</span> Use the mic for hands-free input!</li>
         </ul>
       </div>

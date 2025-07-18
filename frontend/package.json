@@ -17,6 +17,7 @@
     "@mediapipe/face_mesh": "^0.4.1633559619",
     "@react-three/drei": "^10.5.0",
     "@react-three/fiber": "^9.2.0",
+    "@supabase/supabase-js": "^2.51.0",
     "axios": "^1.10.0",
     "face-api.js": "^0.22.2",
     "framer-motion": "^12.23.6",

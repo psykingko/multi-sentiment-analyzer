@@ -188,7 +188,7 @@ const SentimentResult = ({ data }) => {
     <div className="mt-10 w-full max-w-5xl mx-auto">
       <h2 className="unbounded-bold text-xl mb-4 z-10 relative text-white text-left">Sentence-wise Sentiment</h2>
 
-      <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 mb-4">
         {data.map((item, idx) => {
           const sentiment = (item.sentiment || '').toLowerCase();
           const displaySentiment = sentiment.charAt(0).toUpperCase() + sentiment.slice(1);
@@ -198,21 +198,21 @@ const SentimentResult = ({ data }) => {
           return (
             <div
               key={idx}
-              className="bg-[#181A1B] border border-cyan-400/40 rounded-xl p-6 mb-4 shadow-lg transition-all hover:shadow-cyan-400/20 max-w-2xl mx-auto"
+              className="bg-[#181A1B] border border-cyan-400/40 rounded-xl p-4 flex flex-col justify-between shadow-lg transition-all hover:shadow-cyan-400/20"
             >
-              <p className="text-cyan-200 text-base mb-4 leading-relaxed">
+              <p className="text-cyan-200 text-base mb-3 leading-relaxed w-full break-words whitespace-pre-line" title={item.sentence}>
                 "{item.sentence}"
               </p>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col items-center w-full gap-1 mt-auto">
+                <div className="w-full text-center flex items-center justify-center gap-2">
                   <span className="font-semibold text-cyan-300">Sentiment:</span>
-                  <span className="font-bold" style={{ color }}>{displaySentiment}</span>
-                </div>
-                <div className="flex items-center gap-2 ml-6">
-                  <span className="inline-flex items-center justify-center w-7 h-7">
+                  <span className="font-bold text-yellow-400 flex items-center gap-1" style={{ color }}>
                     {icon}
+                    {displaySentiment}
                   </span>
-                  <span className="font-mono text-yellow-400">| Score: {score}</span>
+                </div>
+                <div className="w-full text-center flex items-center justify-center">
+                  <span className="font-mono text-yellow-400">Score: {score}</span>
                 </div>
               </div>
             </div>
