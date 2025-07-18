@@ -25,6 +25,28 @@ load_dotenv()
 import os
 print("ENABLE_DEEP_LEARNING:", os.environ.get("ENABLE_DEEP_LEARNING"))
 from collections import Counter
+import nltk
+import textblob.download_corpora
+
+def ensure_nltk_textblob_corpora():
+    # Download punkt for NLTK
+    try:
+        nltk.data.find('tokenizers/punkt')
+    except LookupError:
+        nltk.download('punkt')
+    # Download punkt_tab for NLTK (rare, but some TextBlob versions require it)
+    try:
+        nltk.data.find('tokenizers/punkt_tab')
+    except LookupError:
+        nltk.download('punkt_tab')
+    # Download TextBlob corpora (wordnet, brown, etc.)
+    try:
+        textblob.download_corpora.download_all()
+    except Exception as e:
+        print(f"[WARN] Could not download TextBlob corpora: {e}")
+
+# Ensure corpora are present before app starts
+ensure_nltk_textblob_corpora()
 
 app = FastAPI()
 
