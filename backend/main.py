@@ -31,7 +31,10 @@ app = FastAPI()
 # CORS config for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # React frontend origin
+    allow_origins=[
+          "http://localhost:5173",
+          "https://multi-sentiment-analyzer.vercel.app/"
+      ],  # React frontend origin
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
