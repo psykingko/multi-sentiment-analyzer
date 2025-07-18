@@ -8,6 +8,7 @@ import Summary from "../components/Summary";
 import RecentAnalysis from "../components/RecentAnalysis";
 import { useAuth } from "../contexts/AuthContext";
 import { analysisHistory } from "../lib/supabase";
+import { getBackendUrl } from '../utils/getBackendUrl';
 
 const instructions = [
   "Select the analysis model (Rule-Based or Deep Learning).",
@@ -27,12 +28,14 @@ export default function Analyzer() {
   const [currentText, setCurrentText] = useState("");
   const [refreshKey, setRefreshKey] = useState(0); // Add this line
 
+  const BACKEND_URL = getBackendUrl();
+
   async function handleAnalyze(text, selectedModel) {
     setLoading(true);
     setCurrentText(text);
     try {
       const response = await axios.post(
-        `http://127.0.0.1:8000/analyze?model=${selectedModel}`,
+        `${BACKEND_URL}/analyze?model=${selectedModel}`,
         { paragraph: text }
       );
       setResult(response.data.results);

@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { getBackendUrl } from './getBackendUrl';
 
-const BACKEND_URL = 'http://127.0.0.1:8000';
+const BACKEND_URL = getBackendUrl();
 
 export const checkBackendStatus = async () => {
   try {
@@ -11,6 +12,4 @@ export const checkBackendStatus = async () => {
   } catch (error) {
     return false;
   }
-};
-
-export const getBackendUrl = () => BACKEND_URL; 
+}; 
