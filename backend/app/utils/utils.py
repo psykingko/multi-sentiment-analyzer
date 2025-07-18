@@ -2,8 +2,12 @@
 
 import nltk
 from nltk.tokenize import sent_tokenize
+from textblob import TextBlob
 
-nltk.download('punkt')
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt')
 
 def split_into_sentences(paragraph: str):
-    return sent_tokenize(paragraph)
+    return [str(s) for s in TextBlob(paragraph).sentences]

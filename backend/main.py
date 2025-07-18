@@ -43,6 +43,10 @@ app.add_middleware(
 # Add GZip compression for all responses
 app.add_middleware(GZipMiddleware, minimum_size=500)
 
+@app.get("/")
+def root():
+    return {"message": "Multi-Sentiment Analyzer API. See /health or /analyze."}
+
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
