@@ -8,6 +8,8 @@ import RecentAnalysis from "../components/RecentAnalysis";
 import { useAuth } from "../contexts/AuthContext";
 import { analysisHistory } from "../lib/supabase";
 import { getBackendUrl } from '../utils/getBackendUrl';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import TextAnalysisPDF from '../components/TextAnalysisPDF';
 
 const instructions = [
   "Select the analysis model (Rule-Based or Deep Learning).",
@@ -98,7 +100,19 @@ export default function Analyzer() {
             <section className="w-full mt-8 mb-10" ref={resultsRef}>
               {hasResults && (
                 <div className={`rounded-2xl border border-white/20 shadow-xl p-8 backdrop-blur-md bg-white/5 text-white transition-all duration-700 ${glow ? 'ring-4 ring-[#FFD700] ring-opacity-60 shadow-yellow-400/40' : ''}`}>
-                  <h2 className="unbounded-bold text-2xl mb-4 text-[#FFD700]">Sentiment Results</h2>
+                  <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+                    <h2 className="unbounded-bold text-2xl text-[#FFD700]">Sentiment Results</h2>
+                    {hasResults && (
+                      <PDFDownloadLink
+                        document={<TextAnalysisPDF analysis={result} summary={summary} userText={currentText} user={user} />}
+                        fileName="text-analysis-result.pdf"
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#FFD700] text-[#181A1B] unbounded-bold text-base shadow hover:bg-[#5fffe0] transition"
+                      >
+                        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#181A1B" strokeWidth="2" className="inline-block"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"/></svg>
+                        Download PDF
+                      </PDFDownloadLink>
+                    )}
+                  </div>
                   <SentimentResult data={result} />
                   {summary && (
                     <>
