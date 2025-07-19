@@ -53,7 +53,7 @@ function SessionSummary({ timeline }) {
 
   return (
     <div className="w-full flex flex-col items-center justify-center mt-10">
-      <h3 className="unbounded-bold text-2xl mb-4 text-[#FFD700] text-center">Session Summary</h3>
+      <h3 className="unbounded-bold text-lg sm:text-xl md:text-2xl mb-4 text-white text-center">Session Summary</h3>
       <div className="flex flex-wrap gap-8 justify-center w-full mb-8">
         <div className="flex flex-col items-center bg-[#181A1B] border border-cyan-400/40 rounded-xl p-6 shadow-lg min-w-[160px] max-w-xs">
           <span className="text-lg font-semibold mb-1 tracking-wide text-cyan-200">Most Frequent Emotion</span>
@@ -102,16 +102,22 @@ function SessionSummary({ timeline }) {
               ))}
             </Pie>
             <Tooltip
-              content={({ active, payload }) =>
-                active && payload && payload.length ? (
-                  <div className="bg-[#23272b] rounded-full shadow-lg px-4 py-2 border border-[#2e3236] animate-fade-in flex items-center gap-2 min-w-0 max-w-xs mx-auto text-base inter-semibold text-white"
-                    style={{ pointerEvents: 'none', minWidth: 'unset', maxWidth: 180 }}>
-                    <span className="text-xl">{TEXT_EMOTION_ICONS[payload[0].name] || ''}</span>
-                    <span>{payload[0].name}</span>
-                    <span className="ml-2 font-mono">{(payload[0].percent * 100).toFixed(1)}%</span>
-                  </div>
-                ) : null
-              }
+              content={({ active, payload }) => {
+                if (active && payload && payload.length) {
+                  const d = payload[0];
+                  const value = d.value || 0;
+                  const percent = total > 0 ? (value / total) * 100 : 0;
+                  return (
+                    <div className="bg-[#23272b] rounded-full shadow-lg px-4 py-2 border border-[#2e3236] animate-fade-in flex items-center gap-2 min-w-0 max-w-xs mx-auto text-base inter-semibold text-white"
+                      style={{ pointerEvents: 'none', minWidth: 'unset', maxWidth: 180 }}>
+                      <span className="text-xl">{TEXT_EMOTION_ICONS[d.name] || ''}</span>
+                      <span>{d.name}</span>
+                      <span className="ml-2 font-mono">{percent.toFixed(1)}%</span>
+                    </div>
+                  );
+                }
+                return null;
+              }}
             />
           </PieChart>
         </ResponsiveContainer>
@@ -375,11 +381,11 @@ const FaceSentiment = () => {
             {timeline.some(entry => entry.emotion === 'Deep model not available') && (
               <div className="mb-4 text-yellow-400 font-semibold text-sm sm:text-base text-center">Advanced AI model is not available in this environment. Please use 'Fast & Simple (Rule-Based)' or install the deep model locally.</div>
             )}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-4 justify-center mb-6 sm:mb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 gap-y-3 justify-center mb-6 sm:mb-8 w-full mx-auto">
               {timeline.map((entry, i) => (
                 <div
                   key={i}
-                  className="p-2 sm:p-3 rounded-2xl border border-white/10 bg-[#23272b] shadow text-center flex flex-col items-center min-w-[80px] max-w-[110px] sm:min-w-[110px] sm:max-w-[130px]"
+                  className="p-2 sm:p-3 rounded-2xl border border-white/10 bg-[#23272b] shadow text-center flex flex-col items-center min-w-0 min-h-[90px] max-w-[110px] sm:min-w-[110px] sm:max-w-[130px] mx-auto"
                 >
                   <p className="text-xs text-white/60 inter-regular mb-1">{entry.time}</p>
                   <div className="text-base sm:text-lg mt-1 mb-1 capitalize unbounded-medium flex items-center justify-center" style={{ color: '#ffffff', wordBreak: 'break-word' }}>
@@ -414,6 +420,9 @@ const FaceSentiment = () => {
           <li>Review your results and insights below.</li>
         </ol>
       </div>
+      <div className="w-full my-10 flex justify-center">
+          <div className="h-1 w-full bg-gradient-to-r from-transparent via-[#FFD700] to-transparent shadow-[0_0_8px_2px_#FFD70044] rounded-full" />
+        </div>
       {/* Model Comparison Section */}
       <div className="w-full rounded-2xl border border-white/20 shadow-xl p-4 sm:p-8 flex flex-col justify-center items-center backdrop-blur-md bg-white/5 text-white mb-6 sm:mb-10">
         <h2 className="unbounded-bold text-xl sm:text-2xl mb-3 sm:mb-4 text-[#FFD700] text-center tracking-wider">Model Options</h2>

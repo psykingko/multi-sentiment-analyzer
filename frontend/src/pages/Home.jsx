@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import React from "react"; // Added for React.cloneElement
 import OldBackground from '../components/OldBackground';
 import { FileText, Smile, ShieldCheck, Users } from "lucide-react";
+import { fetchGlobalInsights } from '../utils/fetchInsights';
+import faceScannerImg from '../assets/face-scanner.png';
 
 const features = [
   {
@@ -11,6 +13,13 @@ const features = [
     desc: "Analyze sentiment and emotion at sentence and paragraph level with advanced AI.",
     icon: (
       <svg width="32" height="32" fill="none" stroke="#00FFCC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-align-left mb-2"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
+    ),
+  },
+  {
+    title: "Face Analysis",
+    desc: "Analyze facial expressions in real-time for emotion and sentiment.",
+    icon: (
+      <img src={faceScannerImg} alt="Face Analysis" className="w-8 h-8 mb-2" />
     ),
   },
   {
@@ -27,6 +36,24 @@ const features = [
       <svg width="32" height="32" fill="none" stroke="#FF6B6B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-cpu mb-2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="15" x2="23" y2="15"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="15" x2="4" y2="15"/></svg>
     ),
   },
+  {
+    title: "Download Sentiment Report",
+    desc: "Export your analysis as a beautiful PDF report with charts and details.",
+    icon: (
+      <svg width="32" height="32" fill="none" stroke="#00FFD0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-download mb-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    ),
+  },
+  {
+    title: "Secured Data",
+    desc: "Your data is encrypted and privacy is our top priority.",
+    icon: (
+      <svg width="32" height="32" fill="none" stroke="#FFD700" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-lock mb-2" viewBox="0 0 32 32">
+        <rect x="8" y="14" width="16" height="10" rx="2" />
+        <path d="M12 14V10a4 4 0 0 1 8 0v4" />
+        <circle cx="16" cy="20" r="1.5" />
+      </svg>
+    ),
+  },
 ];
 
 const aiModels = [
@@ -35,13 +62,15 @@ const aiModels = [
     name: "VADER (Valence Aware Dictionary and sEntiment Reasoner)",
     description: "Rule-based sentiment analyzer optimized for social media and general text. Provides fast, real-time sentiment and emotion analysis.",
     type: "Rule-Based (Text)",
-    accuracy: 85
+    accuracy: 85,
+    accuracyNote: "~85% (on standard benchmarks)"
   },
   {
     name: "TextBlob",
     description: "Lightweight rule-based sentiment analysis library for quick polarity and subjectivity scores.",
     type: "Rule-Based (Text)",
-    accuracy: 78
+    accuracy: 78,
+    accuracyNote: "~78% (on standard benchmarks)"
   },
   {
     name: "DistilBERT",
@@ -49,6 +78,13 @@ const aiModels = [
     type: "Deep Learning (Text)",
     accuracy: 97,
     accuracyNote: "~97% (on standard benchmarks)"
+  },
+  {
+    name: "BERTh",
+    description: "A robust deep learning model for advanced sentiment and emotion analysis, excelling at nuanced language understanding.",
+    type: "Deep Learning (Text)",
+    accuracy: 98,
+    accuracyNote: "~98% (on standard benchmarks)"
   },
   // Face Scan Models
   {
@@ -135,7 +171,7 @@ function PlayIcon() {
 }
 
 // Animated Counter Component
-function AnimatedCounter({ end, suffix = "", duration = 2 }) {
+function AnimatedCounter({ end, suffix = "", duration = 2, decimals = 0 }) {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
@@ -143,18 +179,20 @@ function AnimatedCounter({ end, suffix = "", duration = 2 }) {
     const animate = (currentTime) => {
       if (!startTime) startTime = currentTime;
       const progress = Math.min((currentTime - startTime) / (duration * 1000), 1);
-      const currentCount = Math.floor(progress * end);
+      const currentCount = decimals
+        ? parseFloat((progress * end).toFixed(decimals))
+        : Math.floor(progress * end);
       setCount(currentCount);
       if (progress < 1) {
         requestAnimationFrame(animate);
       }
     };
     requestAnimationFrame(animate);
-  }, [end, duration]);
+  }, [end, duration, decimals]);
 
   return (
     <span className="unbounded-bold text-3xl">
-      {count}{suffix}
+      {decimals ? count.toFixed(decimals) : count}{suffix}
     </span>
   );
 }
@@ -247,6 +285,66 @@ export default function Home() {
   const y2 = useTransform(scrollY, [0, 1000], [0, 100]);
   const y3 = useTransform(scrollY, [0, 1000], [0, -150]);
 
+  // --- Real Insights Stats ---
+  const [insights, setInsights] = useState(null);
+  const [loadingStats, setLoadingStats] = useState(true);
+  const [errorStats, setErrorStats] = useState(null);
+
+  useEffect(() => {
+    async function fetchStats() {
+      setLoadingStats(true);
+      setErrorStats(null);
+      try {
+        const data = await fetchGlobalInsights();
+        setInsights(data);
+      } catch (err) {
+        setErrorStats('Could not fetch stats.');
+      } finally {
+        setLoadingStats(false);
+      }
+    }
+    fetchStats();
+  }, []);
+
+  // Prepare animated values (show 0 while loading)
+  const animatedStats = [
+    {
+      label: "Texts Analyzed",
+      value: insights?.total_analyses ?? 0,
+      suffix: "+",
+      color: "#00FFCC",
+      decimals: 0,
+    },
+    {
+      label: "Emotions Detected",
+      value: insights?.total_emotions ?? 0,
+      suffix: "+",
+      color: "#FFD700",
+      decimals: 0,
+    },
+    {
+      label: "Accuracy Rate",
+      value: insights?.avg_confidence ? parseFloat(insights.avg_confidence) * 100 : 0,
+      suffix: "%",
+      color: "#FF6B6B",
+      decimals: 1,
+    },
+    {
+      label: "Active Users",
+      value: insights?.sessions ?? 0,
+      suffix: "+",
+      color: "#4A5F5D",
+      decimals: 0,
+    },
+  ];
+
+  const statIcons = [
+    <FileText size={32} aria-label="Texts Analyzed" key="texts" />, // 15420+
+    <Smile size={32} aria-label="Emotions Detected" key="emotions" />, // 8920+
+    <ShieldCheck size={32} aria-label="Accuracy Rate" key="accuracy" />, // 98%
+    <Users size={32} aria-label="Active Users" key="users" />, // 1247+
+  ];
+
   return (
     <div className="relative w-full min-h-screen flex flex-col items-center justify-start bg-[#040D12]">
       {/* Futuristic animated background */}
@@ -267,9 +365,9 @@ export default function Home() {
         >
           Analyze text, voice, and facial expressions for sentiment and emotion using state-of-the-art AI.
         </motion.p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center w-full max-w-md mx-auto">
           <motion.div
-            className="rounded-full"
+            className="flex-1"
             whileHover={{ 
               scale: 1.05,
               boxShadow: "0 0 30px rgba(255, 215, 0, 0.6)",
@@ -280,13 +378,13 @@ export default function Home() {
           >
             <Link
               to="/analyze"
-              className="flex items-center px-8 py-3 rounded-full unbounded-bold text-lg bg-black text-white border-2 border-[#222] hover:bg-white hover:text-black transition-all duration-300 shadow-lg border-[#FFD700]"
+              className="w-full min-w-[300px] max-w-xs flex-1 flex items-center justify-center px-8 py-3 rounded-full unbounded-bold text-lg bg-black text-white border-2 border-[#222] hover:bg-white hover:text-black transition-all duration-300 shadow-lg border-[#FFD700] text-center"
             >
               Try Text Analyzer
             </Link>
           </motion.div>
           <motion.div
-            className="rounded-full"
+            className="flex-1"
             whileHover={{ 
               scale: 1.05,
               boxShadow: "0 0 30px rgba(255, 215, 0, 0.6)",
@@ -297,7 +395,7 @@ export default function Home() {
           >
             <Link
               to="/face-scan"
-              className="px-8 py-3 rounded-full unbounded-bold text-lg bg-black text-white border-2 border-[#222] hover:bg-white hover:text-black transition-all duration-300 shadow-lg border-[#FFD700]"
+              className="w-full min-w-[300px] max-w-xs flex-1 flex items-center justify-center px-8 py-3 rounded-full unbounded-bold text-lg bg-black text-white border-2 border-[#222] hover:bg-white hover:text-black transition-all duration-300 shadow-lg border-[#FFD700] text-center"
             >
               Discover Face Scan
             </Link>
@@ -313,7 +411,7 @@ export default function Home() {
         </div>
         {/* Feature cards outer box */}
         <div
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12"
+          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4"
         >
           {features.map((f, i) => (
             <motion.div
@@ -335,8 +433,6 @@ export default function Home() {
       <div className="w-full my-10 flex justify-center">
           <div className="h-0.5 w-3/4 bg-gradient-to-r from-transparent via-[#FFD700] to-transparent shadow-[0_0_8px_2px_#FFD70044] rounded-full" />
         </div>
-      
-      {/* 2. How it works (two cards: Text Analyzer and Face Scan) */}
      
       
       {/* 3. AI Models Powering Our Analysis (AI model cards) */}
@@ -421,7 +517,11 @@ export default function Home() {
                 tabIndex={0}
               >
                 <div className="flex justify-center mb-2 text-gold-400" aria-hidden="true">{statIcons[i]}</div>
-                <AnimatedCounter end={stat.value} suffix={stat.suffix} duration={2.5} />
+                {loadingStats ? (
+                  <span className="unbounded-bold text-3xl animate-pulse text-white/60">0{stat.suffix}</span>
+                ) : (
+                  <AnimatedCounter end={stat.value} suffix={stat.suffix} duration={2.5} decimals={stat.decimals} />
+                )}
                 <p className="inter-regular text-sm text-white/70">{stat.label}</p>
               </motion.div>
             ))}
@@ -457,6 +557,27 @@ export default function Home() {
         
       </section>
 
+      
+      
+      {/* Contact Section */}
+      <section className="w-full max-w-5xl mx-auto mb-8 px-4">
+        <div className="border-t border-[#FFD700]/10 py-8 flex flex-col items-center text-center">
+          
+          <div className="unbounded-bold text-2xl text-whitemb-2">We Love Feedback!</div>
+          <div className="unbounded-regular text-white/90 text-s mb-4">
+            Found a bug ? Got a killer ! idea ? shoot us at
+          </div>
+          <a href="mailto:singhashish9599@.com" className="inline-flex items-center gap-2 px-4 py-2   text-[#FFD700] unbounded-regular text-lg hover:text-[#fff] hover:border-[#fff] transition mb-3">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="text-[#FFD700]" xmlns="http://www.w3.org/2000/svg"><path d="M2 6.5V17.5C2 18.3284 2.67157 19 3.5 19H20.5C21.3284 19 22 18.3284 22 17.5V6.5C22 5.67157 21.3284 5 20.5 5H3.5C2.67157 5 2 5.67157 2 6.5Z" stroke="#FFD700" strokeWidth="2"/><path d="M22 6.5L12 13.5L2 6.5" stroke="#FFD700" strokeWidth="2"/></svg>
+            singhashish9599@.com
+          </a>
+          <div className="inter-regular text-base text-white/80 mt-2 mb-1">DM at</div>
+          <a href="https://www.linkedin.com/in/ashishs190100/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2  text-[#00FFD0] unbounded-regular text-lg hover:text-[#fff] hover:border-[#fff] transition">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="text-[#00FFD0]" xmlns="http://www.w3.org/2000/svg"><path d="M19 0h-14c-2.76 0-5 2.24-5 5v14c0 2.76 2.24 5 5 5h14c2.76 0 5-2.24 5-5v-14c0-2.76-2.24-5-5-5zm-11 19h-3v-9h3v9zm-1.5-10.28c-.97 0-1.75-.79-1.75-1.75s.78-1.75 1.75-1.75 1.75.79 1.75 1.75-.78 1.75-1.75 1.75zm15.5 10.28h-3v-4.5c0-1.08-.02-2.47-1.5-2.47-1.5 0-1.73 1.17-1.73 2.39v4.58h-3v-9h2.89v1.23h.04c.4-.75 1.38-1.54 2.84-1.54 3.04 0 3.6 2 3.6 4.59v4.72z" fill="currentColor"/></svg>
+            LinkedIn
+          </a>
+        </div>
+      </section>
       {/* Warning/Note Section */}
       <section className="w-full max-w-4xl mx-auto mb-10 px-2 sm:px-4">
         <div className="flex items-start gap-2 sm:gap-4 rounded-2xl border-2 border-[#FF3B3B] bg-[#181A1B]/80 shadow-xl p-3 sm:p-6 backdrop-blur-md">
@@ -476,26 +597,6 @@ export default function Home() {
               <li>For feedback or issues, please contact us or open a GitHub issue.</li>
             </ul>
           </div>
-        </div>
-      </section>
-      
-      {/* Contact Section */}
-      <section className="w-full max-w-5xl mx-auto mb-8 px-4">
-        <div className="border-t border-[#FFD700]/10 py-8 flex flex-col items-center text-center">
-          
-          <div className="unbounded-bold text-2xl text-whitemb-2">We Love Feedback!</div>
-          <div className="unbounded-regular text-white/90 text-s mb-4">
-            Found a bug ? Got a killer ! idea ? shoot us at
-          </div>
-          <a href="mailto:singhashish9599@.com" className="inline-flex items-center gap-2 px-4 py-2   text-[#FFD700] unbounded-regular text-lg hover:text-[#fff] hover:border-[#fff] transition mb-3">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="text-[#FFD700]" xmlns="http://www.w3.org/2000/svg"><path d="M2 6.5V17.5C2 18.3284 2.67157 19 3.5 19H20.5C21.3284 19 22 18.3284 22 17.5V6.5C22 5.67157 21.3284 5 20.5 5H3.5C2.67157 5 2 5.67157 2 6.5Z" stroke="#FFD700" strokeWidth="2"/><path d="M22 6.5L12 13.5L2 6.5" stroke="#FFD700" strokeWidth="2"/></svg>
-            singhashish9599@.com
-          </a>
-          <div className="inter-regular text-base text-white/80 mt-2 mb-1">DM at</div>
-          <a href="https://www.linkedin.com/in/ashishs190100/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2  text-[#00FFD0] unbounded-regular text-lg hover:text-[#fff] hover:border-[#fff] transition">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="text-[#00FFD0]" xmlns="http://www.w3.org/2000/svg"><path d="M19 0h-14c-2.76 0-5 2.24-5 5v14c0 2.76 2.24 5 5 5h14c2.76 0 5-2.24 5-5v-14c0-2.76-2.24-5-5-5zm-11 19h-3v-9h3v9zm-1.5-10.28c-.97 0-1.75-.79-1.75-1.75s.78-1.75 1.75-1.75 1.75.79 1.75 1.75-.78 1.75-1.75 1.75zm15.5 10.28h-3v-4.5c0-1.08-.02-2.47-1.5-2.47-1.5 0-1.73 1.17-1.73 2.39v4.58h-3v-9h2.89v1.23h.04c.4-.75 1.38-1.54 2.84-1.54 3.04 0 3.6 2 3.6 4.59v4.72z" fill="currentColor"/></svg>
-            LinkedIn
-          </a>
         </div>
       </section>
       {/* Footer */}

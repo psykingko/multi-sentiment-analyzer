@@ -26,8 +26,9 @@ function FaceEmotionChart({ timeline }) {
 
   return (
     <div>
-      <h3 className="text-2xl unbounded-bold text-white mb-2">Live Emotion Timeline</h3>
-    <div className="w-full max-w-2xl mx-auto my-6 bg-[#181A1B] rounded-xl p-4 shadow border border-white/10">
+      <h3 className="text-lg sm:text-xl md:text-2xl unbounded-bold text-white mb-2">Live Emotion Timeline</h3>
+      <div className="w-full max-w-2xl mx-auto my-6 bg-[#181A1B] rounded-xl p-4 shadow border border-white/10">
+        
       
       <ResponsiveContainer width="100%" height={220}>
         <LineChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>

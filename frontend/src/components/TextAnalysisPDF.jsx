@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
   },
   value: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 11,
     marginBottom: 2,
     wordBreak: 'break-word',
   },

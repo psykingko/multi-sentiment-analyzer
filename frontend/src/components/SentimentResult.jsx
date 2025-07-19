@@ -162,11 +162,11 @@ const SentimentResult = ({ data }) => {
     if (active && payload && payload.length) {
       const d = payload[0].payload;
       return (
-        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg px-4 py-2 border border-gray-200 dark:border-gray-700 animate-fade-in flex items-center gap-2 min-w-0 max-w-xs mx-auto text-base inter-semibold"
-          style={{ pointerEvents: 'none', minWidth: 'unset', maxWidth: 220 }}>
+        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl px-4 py-2 border-2 border-[#FFD700] animate-fade-in flex items-center gap-2 min-w-0 max-w-xs mx-auto text-base inter-bold text-[#181A1B] dark:text-[#FFD700]"
+          style={{ pointerEvents: 'none', minWidth: 'unset', maxWidth: 240, fontWeight: 700 }}>
           <span className="text-xl">{d.icon}</span>
-          <span>{d.sentiment}</span>
-          <span className="ml-2 font-mono">{d.score}</span>
+          <span className="font-bold">{d.sentiment}</span>
+          <span className="ml-2 font-mono text-[#FFD700]">{d.score}</span>
         </div>
       );
     }
@@ -230,8 +230,8 @@ const SentimentResult = ({ data }) => {
                 dataKey="score"
                 stroke="url(#scoreGradient)"
                 strokeWidth={3}
-                dot={{ r: 5, stroke: '#FFD700', strokeWidth: 2, fill: '#181A1B' }}
-                activeDot={{ r: 7, stroke: '#FFD700', strokeWidth: 3, fill: '#FFD700' }}
+                dot={{ r: 6, stroke: '#FFD700', strokeWidth: 2.5, fill: '#181A1B' }}
+                activeDot={{ r: 10, stroke: '#FFD700', strokeWidth: 4, fill: '#FFD700', filter: 'drop-shadow(0 0 8px #FFD70088)' }}
                 isAnimationActive={true}
               />
             </LineChart>

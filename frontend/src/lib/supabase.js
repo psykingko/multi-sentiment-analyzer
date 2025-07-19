@@ -70,7 +70,7 @@ export const analysisHistory = {
   async deleteAnalysis(analysisId, userId) {
     const { error } = await supabase
       .from('analysis_history')
-      .delete()
+      .update({ is_deleted: true })
       .eq('id', analysisId)
       .eq('user_id', userId);
 
