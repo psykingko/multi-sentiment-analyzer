@@ -61,8 +61,9 @@ export default function Header() {
           <span className="inline-block">
             <img src={analysingLogo} width={32} height={32} alt="App Logo" className="align-middle" />
           </span>
-          <span className="unbounded-bold text-lg md:text-xl tracking-widest text-white hidden sm:inline">Multi-Sentiment Analyzer</span>
+          <span className="unbounded-bold text-lg md:text-xl tracking-widest text-white hidden md:inline">Multi-Sentiment Analyzer</span>
         </Link>
+        
         {/* Hamburger for mobile */}
         <button
           className="md:hidden ml-auto flex items-center justify-center p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
@@ -164,17 +165,18 @@ export default function Header() {
       </div>
       {/* Mobile menu overlay */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-[999] bg-black/60 backdrop-blur-sm flex md:hidden">
+        <div className="fixed inset-0 z-[999] bg-black/70 backdrop-blur-md flex md:hidden">
           <motion.div
             initial={{ x: '-100%' }}
             animate={{ x: 0 }}
             exit={{ x: '-100%' }}
             transition={{ type: 'spring', stiffness: 400, damping: 40 }}
-            className="w-72 max-w-[80vw] h-full bg-[#10151A] shadow-2xl border-r border-accent flex flex-col p-6 relative"
+            className="w-80 max-w-[90vw] h-full bg-[#040D12] shadow-2xl border-r-2 border-accent flex flex-col p-7 relative rounded-r-3xl"
+            style={{ boxShadow: '0 0 32px 4px #00FFCC33, 0 4px 32px #000A' }}
           >
             {/* Close button */}
             <button
-              className="absolute top-4 right-4 p-2 rounded-full hover:bg-accent/10 focus:outline-none focus:ring-2 focus:ring-accent"
+              className="absolute top-5 right-[-18px] p-2 bg-[#040D12] rounded-full hover:bg-accent/10 focus:outline-none focus:ring-2 focus:ring-accent border-2 border-[#040D12] shadow-lg"
               aria-label="Close menu"
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -183,22 +185,20 @@ export default function Header() {
               </svg>
             </button>
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2 mb-8" onClick={() => setMobileMenuOpen(false)}>
-              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="16" cy="16" r="14" stroke="#00FFCC" strokeWidth="3" fill="#181A1B" />
-                <circle cx="16" cy="16" r="7" fill="#00FFCC" />
-              </svg>
-              <span className="unbounded-bold text-lg tracking-widest text-white">Multi-Sentiment Analyzer</span>
+            <Link to="/" className="flex items-center gap-3 mb-10" onClick={() => setMobileMenuOpen(false)}>
+              <img src={analysingLogo} width={36} height={36} alt="App Logo" className="align-middle drop-shadow-lg" />
+              <span className="unbounded-bold text-base tracking-widest text-white">Multi-Sentiment Analyzer</span>
             </Link>
             {/* Nav links */}
-            <nav className="flex flex-col gap-3 mb-8">
+            <nav className="flex flex-col gap-3 mb-10">
               {navItems.map((item) => (
                 <NavLink
                   key={item.to}
                   to={item.to}
                   className={({ isActive }) =>
-                    `inter-medium text-white text-base px-3 py-2 rounded-lg transition-all duration-150 hover:text-accent focus-visible:outline-none whitespace-nowrap ${isActive ? 'text-accent bg-accent/10' : ''}`
+                    `unbounded-bold text-white text-xs px-3 py-2 rounded-2xl transition-all duration-150 shadow-sm hover:text-accent hover:bg-accent/10 focus-visible:outline-none whitespace-nowrap ${isActive ? 'text-accent bg-accent/10 border-2' : 'border-2 border-transparent'}`
                   }
+                  style={({ isActive }) => isActive ? { borderColor: '#FFD700' } : {}}
                   onClick={() => setMobileMenuOpen(false)}
                   end={item.to === '/'}
                 >
@@ -211,14 +211,14 @@ export default function Header() {
               {isAuthenticated ? (
                 <>
                   <button
-                    className="flex items-center px-4 py-2 text-base text-white/90 hover:bg-accent/10 rounded-lg transition-colors gap-2"
+                    className="flex items-center px-3 py-2 text-base text-white/90 hover:bg-accent/10 rounded-2xl transition-colors gap-2 shadow-sm border-2 border-transparent hover:border-accent"
                     onClick={() => { setMobileMenuOpen(false); /* TODO: Add recent analyses logic */ }}
                   >
                     <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="inline-block"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></svg>
                     Recent Analyses
                   </button>
                   <button
-                    className="flex items-center px-4 py-2 text-base text-red-400 hover:bg-red-500/10 rounded-lg transition-colors gap-2"
+                    className="flex items-center px-3 py-2 text-base text-red-400 hover:bg-red-500/10 rounded-2xl transition-colors gap-2 shadow-sm border-2 border-transparent hover:border-red-400"
                     onClick={() => { setMobileMenuOpen(false); setShowLogoutModal(true); }}
                   >
                     <LogOut className="w-5 h-5" />
@@ -228,14 +228,14 @@ export default function Header() {
               ) : (
                 <button
                   onClick={() => { setMobileMenuOpen(false); setShowLoginModal(true); }}
-                  className="px-4 py-2 unbounded-bold text-base rounded-full bg-[#00FFCC] text-[#181A1B] hover:bg-[#00FFCC]/80 transition-all duration-150"
+                  className="px-3 py-2 unbounded-bold text-base rounded-2xl bg-accent text-[#181A1B] hover:bg-accent/80 transition-all duration-150 shadow-sm border-2 border-accent"
                 >
                   Sign In
                 </button>
               )}
             </div>
             {/* Backend Status at bottom */}
-            <div className="mt-8">
+            <div className="mt-10">
               <BackendStatus />
             </div>
           </motion.div>
