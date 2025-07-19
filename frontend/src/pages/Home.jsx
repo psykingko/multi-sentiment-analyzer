@@ -167,7 +167,7 @@ function FAQItem({ question, answer, isOpen, onToggle }) {
     >
       <button
         onClick={onToggle}
-        className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-white/5 transition-colors"
+        className="w-full px-4 md:px-6 py-4 text-left flex items-center justify-between hover:bg-white/5 transition-colors"
       >
         <h4 className="unbounded-regular text-lg text-white font-medium">{question}</h4>
         <svg
@@ -176,6 +176,7 @@ function FAQItem({ question, answer, isOpen, onToggle }) {
           fill="none"
           stroke="#00FFCC"
           strokeWidth="2"
+          className="ml-2 md:ml-0 flex-shrink-0"
           style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s' }}
         >
           <polyline points="6,9 12,15 18,9"></polyline>
@@ -336,48 +337,8 @@ export default function Home() {
         </div>
       
       {/* 2. How it works (two cards: Text Analyzer and Face Scan) */}
-      <section className="w-full max-w-4xl mx-auto mb-16 px-4">
-        <div
-          className="unbounded-bold text-3xl md:text-4xl mb-10 tracking-widest text-[#FFD700] text-center rounded-2xl py-6 px-2 shadow-xl"
-        >
-          How it works
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Text Analyzer Card */}
-          <motion.div
-            className="rounded-2xl border border-white/20 shadow-xl p-8 flex flex-col bg-white/5 backdrop-blur-md"
-            whileHover={{ scale: 1.01, borderColor: '#FFD700' }}
-           
-            transition={{ type: 'spring', stiffness: 600, damping: 18 }}
-          >
-            <h3 className="unbounded-bold text-2xl mb-4 text-white text-center">Text Analyzer</h3>
-            <ol className="list-decimal list-inside inter-regular text-white/90 space-y-2">
-              <li>Select the analysis model: Rule-Based (fast, simple) or Deep Learning (advanced, local only).</li>
-              <li>Type, paste, or speak your text into the input box.</li>
-              <li>Click the <span className="font-bold">Analyze</span> button.</li>
-              <li>View instant sentiment and emotion results for each sentence and the whole text, with clear charts and icons.</li>
-            </ol>
-          </motion.div>
-          {/* Face Scan Card */}
-          <motion.div
-            className="rounded-2xl border border-white/20 shadow-xl p-8 flex flex-col bg-white/5 backdrop-blur-md"
-            whileHover={{ scale: 1.01, borderColor: '#FFD700' }}
-            
-            transition={{ type: 'spring', stiffness: 600, damping: 18 }}
-          >
-            <h3 className="unbounded-bold text-2xl mb-4 text-white text-center">Face Scan</h3>
-            <ol className="list-decimal list-inside inter-regular text-white/90 space-y-2">
-              <li>Click <span className="font-bold">Discover Face Scan</span> on the home page or in the menu.</li>
-              <li>Allow camera access when prompted (your video stays private).</li>
-              <li>Click <span className="font-bold">Start Face Scan</span> and look at your webcam for a few seconds.</li>
-              <li>See your detected emotions in real time, visualized as a timeline of facial expressions.</li>
-            </ol>
-          </motion.div>
-        </div>
-      </section>
-      <div className="w-full my-10 flex justify-center">
-          <div className="h-0.5 w-3/4 bg-gradient-to-r from-transparent via-[#FFD700] to-transparent shadow-[0_0_8px_2px_#FFD70044] rounded-full" />
-        </div>
+     
+      
       {/* 3. AI Models Powering Our Analysis (AI model cards) */}
       <section className="w-full max-w-4xl mx-auto mb-16 px-4">
       <div
@@ -495,6 +456,70 @@ export default function Home() {
           </div>
         
       </section>
+
+      {/* Warning/Note Section */}
+      <section className="w-full max-w-4xl mx-auto mb-10 px-2 sm:px-4">
+        <div className="flex items-start gap-2 sm:gap-4 rounded-2xl border-2 border-[#FF3B3B] bg-[#181A1B]/80 shadow-xl p-3 sm:p-6 backdrop-blur-md">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="flex-shrink-0 mt-1 sm:w-7 sm:h-7">
+            <circle cx="12" cy="12" r="11" stroke="#FFD700" strokeWidth="2" fill="#181A1B"/>
+            <path d="M12 7v5" stroke="#FFD700" strokeWidth="2" strokeLinecap="round"/>
+            <circle cx="12" cy="16" r="1.2" fill="#FFD700"/>
+          </svg>
+          <div>
+            <div className="unbounded-bold text-[#FFD700] text-base sm:text-lg mb-1">Experimental Feature Notice</div>
+            <ul className="list-disc list-inside text-white/80 inter-regular text-xs sm:text-sm space-y-2 pl-2">
+              <li>This app is <span className="text-[#FFD700]">experimental</span> and under active development.</li>
+              <li>Sentiment and emotion results may not be fully accurate or reliable.</li>
+              <li>AI models may misinterpret sarcasm, slang, or complex emotions.</li>
+              <li>Facial and voice analysis is for demonstration only and not for medical or diagnostic use.</li>
+              <li>No personal data is stored, but use caution with sensitive information.</li>
+              <li>For feedback or issues, please contact us or open a GitHub issue.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+      
+      {/* Contact Section */}
+      <section className="w-full max-w-5xl mx-auto mb-8 px-4">
+        <div className="border-t border-[#FFD700]/10 py-8 flex flex-col items-center text-center">
+          
+          <div className="unbounded-bold text-2xl text-whitemb-2">We Love Feedback!</div>
+          <div className="unbounded-regular text-white/90 text-s mb-4">
+            Found a bug ? Got a killer ! idea ? shoot us at
+          </div>
+          <a href="mailto:singhashish9599@.com" className="inline-flex items-center gap-2 px-4 py-2   text-[#FFD700] unbounded-regular text-lg hover:text-[#fff] hover:border-[#fff] transition mb-3">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="text-[#FFD700]" xmlns="http://www.w3.org/2000/svg"><path d="M2 6.5V17.5C2 18.3284 2.67157 19 3.5 19H20.5C21.3284 19 22 18.3284 22 17.5V6.5C22 5.67157 21.3284 5 20.5 5H3.5C2.67157 5 2 5.67157 2 6.5Z" stroke="#FFD700" strokeWidth="2"/><path d="M22 6.5L12 13.5L2 6.5" stroke="#FFD700" strokeWidth="2"/></svg>
+            singhashish9599@.com
+          </a>
+          <div className="inter-regular text-base text-white/80 mt-2 mb-1">DM at</div>
+          <a href="https://www.linkedin.com/in/ashishs190100/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2  text-[#00FFD0] unbounded-regular text-lg hover:text-[#fff] hover:border-[#fff] transition">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="text-[#00FFD0]" xmlns="http://www.w3.org/2000/svg"><path d="M19 0h-14c-2.76 0-5 2.24-5 5v14c0 2.76 2.24 5 5 5h14c2.76 0 5-2.24 5-5v-14c0-2.76-2.24-5-5-5zm-11 19h-3v-9h3v9zm-1.5-10.28c-.97 0-1.75-.79-1.75-1.75s.78-1.75 1.75-1.75 1.75.79 1.75 1.75-.78 1.75-1.75 1.75zm15.5 10.28h-3v-4.5c0-1.08-.02-2.47-1.5-2.47-1.5 0-1.73 1.17-1.73 2.39v4.58h-3v-9h2.89v1.23h.04c.4-.75 1.38-1.54 2.84-1.54 3.04 0 3.6 2 3.6 4.59v4.72z" fill="currentColor"/></svg>
+            LinkedIn
+          </a>
+        </div>
+      </section>
+      {/* Footer */}
+      <footer className="w-full bg-[#040D12] border-t border-[#FFD700]/30 py-6 flex flex-col items-center justify-center z-10 relative">
+        <div className="unbounded-bold text-base text-[#FFD700] mb-1">Multi-Sentiment Analyzer</div>
+        <div className="inter-regular text-white/70 text-xs mb-2">&copy; {new Date().getFullYear()} Multi-Sentiment Analyzer. All rights reserved.</div>
+        <div className="inter-regular text-xs text-white/80 mb-2">
+          Created by <a href="https://www.linkedin.com/in/ashishs190100/" target="_blank" rel="noopener noreferrer" className="text-[#FFD700] hover:underline">Ashish Singh</a>
+        </div>
+        <div className="flex items-center gap-4 mb-2">
+          <a href="https://github.com/your-repo-url" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 group">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-[#00FFD0] group-hover:scale-110 transition-transform" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2C6.48 2 2 6.58 2 12.26c0 4.5 2.87 8.32 6.84 9.67.5.09.68-.22.68-.48 0-.24-.01-.87-.01-1.7-2.78.62-3.37-1.36-3.37-1.36-.45-1.18-1.1-1.5-1.1-1.5-.9-.63.07-.62.07-.62 1 .07 1.53 1.05 1.53 1.05.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.7 0 0 .84-.28 2.75 1.05A9.38 9.38 0 0 1 12 6.84c.85.004 1.71.12 2.51.35 1.91-1.33 2.75-1.05 2.75-1.05.55 1.4.2 2.44.1 2.7.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.81-4.57 5.07.36.32.68.94.68 1.9 0 1.37-.01 2.47-.01 2.81 0 .27.18.58.69.48A10.01 10.01 0 0 0 22 12.26C22 6.58 17.52 2 12 2Z" fill="currentColor"/>
+            </svg>
+            <span className="text-xs text-[#00FFD0] group-hover:underline transition">GitHub</span>
+          </a>
+          <a href="https://www.linkedin.com/in/ashishs190100/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 group">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-[#FFD700] group-hover:scale-110 transition-transform" xmlns="http://www.w3.org/2000/svg">
+              <path d="M19 0h-14c-2.76 0-5 2.24-5 5v14c0 2.76 2.24 5 5 5h14c2.76 0 5-2.24 5-5v-14c0-2.76-2.24-5-5-5zm-11 19h-3v-9h3v9zm-1.5-10.28c-.97 0-1.75-.79-1.75-1.75s.78-1.75 1.75-1.75 1.75.79 1.75 1.75-.78 1.75-1.75 1.75zm15.5 10.28h-3v-4.5c0-1.08-.02-2.47-1.5-2.47-1.5 0-1.73 1.17-1.73 2.39v4.58h-3v-9h2.89v1.23h.04c.4-.75 1.38-1.54 2.84-1.54 3.04 0 3.6 2 3.6 4.59v4.72z" fill="currentColor"/>
+            </svg>
+            <span className="text-xs text-[#FFD700] group-hover:underline transition">LinkedIn</span>
+          </a>
+        </div>
+      </footer>
     </div>
   );
 } 
