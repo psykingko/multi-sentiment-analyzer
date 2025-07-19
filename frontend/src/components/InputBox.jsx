@@ -3,7 +3,7 @@ import { useState, useRef, Fragment } from "react";
 import { Mic, MicOff } from "lucide-react";
 import { Listbox, Transition } from '@headlessui/react';
 import { ChevronUpDownIcon, CheckIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
-import Tooltip from './Tooltip'; // Assume Tooltip exists or will be created
+
 
 const modelOptions = [
   { value: "rule", label: "Fast & Simple (Recommended)" },
