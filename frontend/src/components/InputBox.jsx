@@ -15,6 +15,7 @@ const InputBox = ({ onAnalyze, loading, model = "rule", setModel }) => {
   const [listening, setListening] = useState(false);
   const [deepUnavailable, setDeepUnavailable] = useState(false);
   const recognitionRef = useRef(null);
+  const debounceRef = useRef(null);
 
   const startListening = () => {
     const SpeechRecognition =
@@ -59,6 +60,10 @@ const InputBox = ({ onAnalyze, loading, model = "rule", setModel }) => {
   };
 
   const handleClick = async () => {
+    if (debounceRef.current) return; // Block if debounce is active
+    debounceRef.current = setTimeout(() => {
+      debounceRef.current = null;
+    }, 700);
     if (listening) stopListening();
     if (text.trim()) {
       const result = await onAnalyze(text, model);

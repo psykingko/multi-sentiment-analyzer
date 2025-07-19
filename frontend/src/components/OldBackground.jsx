@@ -1,13 +1,18 @@
-import React, { useRef } from "react";
+import React, { useRef, useMemo } from "react";
 import { motion } from "framer-motion";
 
-const BALL_COUNT = 80;
+function getBallCount() {
+  if (typeof window !== 'undefined' && window.innerWidth < 640) {
+    return 16; // Fewer balls on mobile
+  }
+  return 80; // Default for desktop
+}
 
 export default function OldBackground() {
-  // Generate ball properties only once
-  const ballsRef = useRef(null);
-  if (!ballsRef.current) {
-    ballsRef.current = Array.from({ length: BALL_COUNT }).map(() => {
+  const ballCount = getBallCount();
+  // Memoize balls so they don't recalculate on every render
+  const balls = useMemo(() => {
+    return Array.from({ length: ballCount }).map(() => {
       const left = Math.random() * 100;
       const top = Math.random() * 100;
       const size = 10 + Math.random() * 18;
@@ -21,8 +26,8 @@ export default function OldBackground() {
       const duration = 10 + Math.random() * 8;
       return { left, top, size, blur, color, opacity, deltaY, deltaX, duration };
     });
-  }
-  const balls = ballsRef.current;
+    // Only recalculate if ballCount changes
+  }, [ballCount]);
 
   return (
     <div className="fixed top-0 left-0 w-full h-full z-0 pointer-events-none">

@@ -1,4 +1,5 @@
 // Summary.jsx
+import React from "react";
 import {
   PieChart,
   Pie,
@@ -8,7 +9,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 
 export const EMOTION_COLORS = {
   Positive: "#00FFCC",
@@ -57,7 +58,7 @@ export const EMOTION_ICONS = {
   ),
 };
 
-const Summary = ({ summary, section }) => {
+const Summary = React.memo(({ summary, section }) => {
   const [animatedCounts, setAnimatedCounts] = useState({});
   const [isMobile, setIsMobile] = useState(false); // NEW
 
@@ -98,9 +99,9 @@ const Summary = ({ summary, section }) => {
 
   if (!summary) return null;
   const { sentiment: overall_sentiment, average_score, word_count, char_count, mental_state, mental_state_distribution } = summary;
-  const data = mental_state_distribution
+  const data = useMemo(() => mental_state_distribution
     ? Object.entries(mental_state_distribution).map(([name, value]) => ({ name, value }))
-    : [];
+    : [], [mental_state_distribution]);
 
   // Only show pie chart and legend for 'distribution' section
   if (section === 'distribution') {
@@ -117,7 +118,7 @@ const Summary = ({ summary, section }) => {
                 outerRadius={isMobile ? 70 : 100}
                 fill="#8884d8"
                 dataKey="value"
-                isAnimationActive={true}
+                isAnimationActive={!isMobile}
                 label={isMobile ? false : ({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
               >
                 {data.map((entry, index) => (
@@ -181,7 +182,7 @@ const Summary = ({ summary, section }) => {
           <div className="flex-1 min-w-[160px] bg-[#181A1B] border border-cyan-400/40 rounded-xl p-6 mb-4 shadow-lg transition-all hover:shadow-cyan-400/20 max-w-2xl mx-auto flex flex-col items-center justify-center text-white">
             <span className="text-lg font-semibold mb-1 tracking-wide text-cyan-200">Mental State</span>
             <span className="flex items-center gap-2 text-2xl font-bold mt-1" style={{color: EMOTION_COLORS[mental_state] || '#FFD700'}}>
-              {EMOTION_ICONS[mental_state] || '🔎'} {mental_state || 'N/A'}
+              {EMOTION_ICONS[mental_state] || '\ud83d\udd0e'} {mental_state || 'N/A'}
             </span>
           </div>
         </div>
@@ -205,6 +206,6 @@ const Summary = ({ summary, section }) => {
       <Summary summary={summary} section="summary" />
     </>
   );
-};
+});
 
 export default Summary;

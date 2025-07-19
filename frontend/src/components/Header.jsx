@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { LoginModal, LogoutConfirmModal } from '../contexts/AuthContext';
 import { User, LogOut } from 'lucide-react';
 import analysingLogo from '../assets/analysing.png';
+import analysingWebp from '../assets/analysing.webp';
 
 const navItems = [
   { to: '/', label: 'Home' },
@@ -59,7 +60,10 @@ export default function Header() {
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 flex-shrink-0">
           <span className="inline-block">
-            <img src={analysingLogo} width={32} height={32} alt="App Logo" className="align-middle" />
+            <picture>
+              <source srcSet={analysingWebp} type="image/webp" />
+              <img src={analysingLogo} width={32} height={32} alt="App Logo" className="align-middle" loading="lazy" />
+            </picture>
           </span>
           <span className="unbounded-bold text-lg md:text-xl tracking-widest text-white hidden md:inline">Multi-Sentiment Analyzer</span>
         </Link>
@@ -186,7 +190,10 @@ export default function Header() {
             </button>
             {/* Logo */}
             <Link to="/" className="flex items-center gap-3 mb-10" onClick={() => setMobileMenuOpen(false)}>
-              <img src={analysingLogo} width={36} height={36} alt="App Logo" className="align-middle drop-shadow-lg" />
+              <picture>
+                <source srcSet={analysingWebp} type="image/webp" />
+                <img src={analysingLogo} width={36} height={36} alt="App Logo" className="align-middle drop-shadow-lg" loading="lazy" />
+              </picture>
               <span className="unbounded-bold text-base tracking-widest text-white">Multi-Sentiment Analyzer</span>
             </Link>
             {/* Nav links */}

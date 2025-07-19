@@ -1,22 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { analysisHistory } from '../lib/supabase';
 import { Trash2, Clock, BarChart3 } from 'lucide-react';
 
-const RecentAnalysis = ({ onSelectAnalysis, refreshKey }) => {
+const RecentAnalysis = React.memo(({ onSelectAnalysis, refreshKey }) => {
   const { user } = useAuth();
   const [analyses, setAnalyses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (user) {
-      loadRecentAnalyses();
-    }
-  }, [user, refreshKey]);
-
-  const loadRecentAnalyses = async () => {
+  const loadRecentAnalyses = useCallback(async () => {
     try {
       setLoading(true);
       const data = await analysisHistory.getRecentAnalysis(user.id, 5);
@@ -27,18 +21,24 @@ const RecentAnalysis = ({ onSelectAnalysis, refreshKey }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
-  const handleDelete = async (analysisId) => {
+  useEffect(() => {
+    if (user) {
+      loadRecentAnalyses();
+    }
+  }, [user, refreshKey, loadRecentAnalyses]);
+
+  const handleDelete = useCallback(async (analysisId) => {
     try {
       await analysisHistory.deleteAnalysis(analysisId, user.id);
-      setAnalyses(analyses.filter(analysis => analysis.id !== analysisId));
+      setAnalyses(analyses => analyses.filter(analysis => analysis.id !== analysisId));
     } catch (err) {
       console.error('Error deleting analysis:', err);
     }
-  };
+  }, [user]);
 
-  const formatDate = (dateString) => {
+  const formatDate = useCallback((dateString) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
@@ -50,18 +50,18 @@ const RecentAnalysis = ({ onSelectAnalysis, refreshKey }) => {
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffHours < 48) return 'Yesterday';
     return date.toLocaleDateString();
-  };
+  }, []);
 
-  const getSentimentColor = (sentiment) => {
+  const getSentimentColor = useCallback((sentiment) => {
     switch (sentiment?.toLowerCase()) {
       case 'positive': return '#00FFCC';
       case 'negative': return '#FF6B6B';
       case 'neutral': return '#FFD700';
       default: return '#666';
     }
-  };
+  }, []);
 
-  const getSentimentIcon = (sentiment) => {
+  const getSentimentIcon = useCallback((sentiment) => {
     const color = getSentimentColor(sentiment);
     switch (sentiment?.toLowerCase()) {
       case 'positive':
@@ -92,7 +92,46 @@ const RecentAnalysis = ({ onSelectAnalysis, refreshKey }) => {
           </svg>
         );
     }
-  };
+  }, [getSentimentColor]);
+
+  // Always call hooks before any early return!
+  const renderedAnalyses = useMemo(() => analyses.map((analysis, index) => (
+    <motion.div
+      key={analysis.id}
+      className="group relative rounded-xl border border-white/10 p-4 hover:border-[#00FFCC]/30 hover:bg-white/5 transition-all duration-200 cursor-pointer"
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.1 }}
+      onClick={() => onSelectAnalysis(analysis)}
+    >
+      <div className="flex items-start justify-between">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-2">
+            {getSentimentIcon(analysis.summary?.sentiment)}
+            <span className="text-sm text-white/80 font-medium">
+              {analysis.summary?.sentiment || 'Unknown'}
+            </span>
+            <span className="text-xs text-white/60">
+              {formatDate(analysis.created_at)}
+            </span>
+          </div>
+          <p className="text-white/90 text-sm line-clamp-2">
+            {analysis.text?.substring(0, 100)}
+            {analysis.text?.length > 100 && '...'}
+          </p>
+        </div>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDelete(analysis.id);
+          }}
+          className="opacity-0 group-hover:opacity-100 p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all duration-200"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
+    </motion.div>
+  )), [analyses, onSelectAnalysis, getSentimentIcon, formatDate, handleDelete]);
 
   if (!user) {
     return (
@@ -164,54 +203,13 @@ const RecentAnalysis = ({ onSelectAnalysis, refreshKey }) => {
         ) : (
           <div className="flex-1 overflow-y-auto space-y-2 pr-1 min-h-[340px] max-h-[350px]">
             <AnimatePresence>
-              {analyses.map((analysis, index) => (
-                <motion.div
-                  key={analysis.id}
-                  className="group relative rounded-xl border border-white/10 p-4 hover:border-[#00FFCC]/30 hover:bg-white/5 transition-all duration-200 cursor-pointer"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  onClick={() => onSelectAnalysis(analysis)}
-                  // whileHover={{ scale: 1.02 }}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        {getSentimentIcon(analysis.summary?.sentiment)}
-                        <span className="text-sm text-white/80 font-medium">
-                          {analysis.summary?.sentiment || 'Unknown'}
-                        </span>
-                        <span className="text-xs text-white/60">
-                          {formatDate(analysis.created_at)}
-                        </span>
-                      </div>
-                      <p className="text-white/90 text-sm line-clamp-2">
-                        {analysis.text?.substring(0, 100)}
-                        {analysis.text?.length > 100 && '...'}
-                      </p>
-                      {/* <div className="flex items-center gap-4 mt-2 text-xs text-white/60">
-                        <span>Model: {analysis.model}</span>
-                        <span>Sentences: {analysis.results?.length || 0}</span>
-                      </div> */}
-                    </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(analysis.id);
-                      }}
-                      className="opacity-0 group-hover:opacity-100 p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all duration-200"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
+              {renderedAnalyses}
             </AnimatePresence>
           </div>
         )}
       </div>
     </motion.div>
   );
-};
+});
 
 export default RecentAnalysis; 

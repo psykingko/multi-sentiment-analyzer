@@ -1,9 +1,24 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import viteCompression from 'vite-plugin-compression'; // Add this import
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import viteCompression from 'vite-plugin-compression';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react(), viteCompression()], // Enable Brotli/gzip compression for production
-})
-// If deploying with a custom server (e.g., Express), also enable compression middleware server-side.
+  plugins: [react(), viteCompression()],
+  build: {
+    sourcemap: true,
+    minify: true,
+  },
+  define: {
+    'process.env': {},
+    global: 'window',
+  },
+  optimizeDeps: {
+    include: ['buffer'],
+  },
+  resolve: {
+    alias: {
+      buffer: 'buffer',
+    },
+  },
+});

@@ -24,6 +24,9 @@ function FaceEmotionChart({ timeline }) {
     confidence: entry.confidence,
   }));
 
+  // Mobile check
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+
   return (
     <div>
       <h3 className="text-lg sm:text-xl md:text-2xl unbounded-bold text-white mb-2">Live Emotion Timeline</h3>
@@ -37,7 +40,7 @@ function FaceEmotionChart({ timeline }) {
           <YAxis domain={[0, 100]} stroke="#FFD700" tick={{ fill: '#FFD700' }} />
           <Tooltip contentStyle={{ background: '#23272b', border: '1px solid #FFD700', color: '#FFD700' }} />
           <Legend />
-          <Line type="monotone" dataKey="confidence" stroke="#FFD700" strokeWidth={3} dot={{ r: 5, fill: '#FFD700' }} name="Confidence" />
+          <Line type="monotone" dataKey="confidence" stroke="#FFD700" strokeWidth={3} dot={{ r: 5, fill: '#FFD700' }} name="Confidence" isAnimationActive={!isMobile} />
         </LineChart>
       </ResponsiveContainer>
       <ResponsiveContainer width="100%" height={60}>
@@ -45,7 +48,7 @@ function FaceEmotionChart({ timeline }) {
           <XAxis dataKey="time" hide />
           <YAxis hide />
           <Tooltip contentStyle={{ background: '#23272b', border: '1px solid #FFD700', color: '#FFD700' }} />
-          <Bar dataKey="emotion" name="Emotion" isAnimationActive={false}>
+          <Bar dataKey="emotion" name="Emotion" isAnimationActive={!isMobile}>
             {data.map((entry, idx) => (
               <Cell key={`cell-${idx}`} fill={EMOTION_COLORS[entry.emotion] || '#FFD700'} />
             ))}

@@ -1,9 +1,10 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useCallback, useMemo } from "react";
 import { FaceMesh } from "@mediapipe/face_mesh";
 import { Camera } from "@mediapipe/camera_utils";
 import { getEmoji, predictEmotion, detectFaceEmotion } from "../utils/emotionUtil";
 import FaceEmotionChart from './FaceEmotionChart';
 import humanHeadPng from '../assets/face-scanner.png';
+import humanHeadWebp from '../assets/face-scanner.webp';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { Listbox, Transition } from '@headlessui/react';
 import { ChevronUpDownIcon, CheckIcon } from '@heroicons/react/24/outline';
@@ -29,27 +30,27 @@ function SessionSummary({ timeline }) {
   if (!timeline || timeline.length === 0) return null;
 
   // Calculate most frequent emotion
-  const emotionCounts = {};
-  let confidenceSum = 0;
-  timeline.forEach(({ emotion, confidence }) => {
-    emotionCounts[emotion] = (emotionCounts[emotion] || 0) + 1;
-    confidenceSum += confidence;
-  });
-  const mostFrequentEmotion = Object.entries(emotionCounts).reduce((a, b) => (a[1] > b[1] ? a : b))[0];
-  const averageConfidence = (confidenceSum / timeline.length).toFixed(1);
-
-  // Pie chart data
-  const pieData = Object.entries(emotionCounts).map(([emotion, count]) => ({
-    name: emotion,
-    value: count,
-  }));
+  const emotionCounts = useMemo(() => {
+    const counts = {};
+    let confidenceSum = 0;
+    timeline.forEach(({ emotion, confidence }) => {
+      counts[emotion] = (counts[emotion] || 0) + 1;
+      confidenceSum += confidence;
+    });
+    return counts;
+  }, [timeline]);
+  const mostFrequentEmotion = useMemo(() => Object.entries(emotionCounts).reduce((a, b) => (a[1] > b[1] ? a : b))[0], [emotionCounts]);
+  const averageConfidence = useMemo(() => {
+    if (!timeline.length) return 0;
+    let sum = 0;
+    timeline.forEach(({ confidence }) => { sum += confidence; });
+    return (sum / timeline.length).toFixed(1);
+  }, [timeline]);
+  const pieData = useMemo(() => Object.entries(emotionCounts).map(([emotion, count]) => ({ name: emotion, value: count })), [emotionCounts]);
   const total = timeline.length;
-
-  // For emotion cards (distribution)
-  const distribution = Object.entries(emotionCounts).map(([emotion, count]) => ({
-    name: emotion,
-    percent: Math.round((count / total) * 100),
-  }));
+  const distribution = useMemo(() => Object.entries(emotionCounts).map(([emotion, count]) => ({ name: emotion, percent: Math.round((count / total) * 100) })), [emotionCounts, total]);
+  // Detect mobile
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
 
   return (
     <div className="w-full flex flex-col items-center justify-center mt-10">
@@ -89,7 +90,7 @@ function SessionSummary({ timeline }) {
               outerRadius={100}
               fill="#8884d8"
               dataKey="value"
-              isAnimationActive={true}
+              isAnimationActive={!isMobile}
               label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
             >
               {pieData.map((entry, index) => (
@@ -125,13 +126,14 @@ function SessionSummary({ timeline }) {
     </div>
   );
 }
+const MemoSessionSummary = React.memo(SessionSummary);
 
 const modelOptions = [
   { value: 'rule', label: 'Fast & Simple (Recommended)' },
   { value: 'deep', label: 'Advanced AI' },
 ];
 
-const FaceSentiment = () => {
+const FaceSentiment = React.memo(() => {
   const videoRef = useRef(null);
   const [timeline, setTimeline] = useState([]); // [{time, emotion, emoji, confidence}]
   const [scanning, setScanning] = useState(false);
@@ -154,16 +156,16 @@ const FaceSentiment = () => {
   }, [scanning, countdown]);
 
   // Helper to stop and cleanup video
-  const stopVideo = () => {
+  const stopVideo = useCallback(() => {
     const stream = videoRef.current?.srcObject;
     if (stream) {
       stream.getTracks().forEach((track) => track.stop());
       videoRef.current.srcObject = null;
     }
     setScanning(false);
-  };
+  }, []);
 
-  const handleAnalyzeFace = async () => {
+  const handleAnalyzeFace = useCallback(async () => {
     setTimeline([]);
     setError("");
     setScanning(true);
@@ -249,10 +251,10 @@ const FaceSentiment = () => {
       setScanning(false);
       setCameraOn(false);
     }
-  };
+  }, [mode, stopVideo]);
 
   // Helper to map Face API emotion to SentimentResult icon key
-  const mapFaceEmotionToIconKey = (emotion) => {
+  const mapFaceEmotionToIconKey = useCallback((emotion) => {
     switch ((emotion || '').toLowerCase()) {
       case 'happy': return 'joy';
       case 'sad': return 'sadness';
@@ -266,7 +268,7 @@ const FaceSentiment = () => {
       case 'negative': return 'negative';
       default: return 'neutral';
     }
-  };
+  }, []);
 
   return (
     <div className="w-full flex flex-col items-center justify-center">
@@ -348,14 +350,10 @@ const FaceSentiment = () => {
                 className="object-contain w-full h-full rounded-2xl"
               />
             ) : (
-              <img
-                src={humanHeadPng}
-                width={120}
-                height={120}
-                alt="Human Head Silhouette"
-                style={{ filter: 'brightness(1.2) sepia(1) hue-rotate(10deg) saturate(8) contrast(1.2)' }}
-                className="w-[120px] h-[120px]"
-              />
+              <picture>
+                <source srcSet={humanHeadWebp} type="image/webp" />
+                <img src={humanHeadPng} alt="Human Head Silhouette" loading="lazy" />
+              </picture>
             )}
           </div>
         </div>
@@ -402,7 +400,7 @@ const FaceSentiment = () => {
             <FaceEmotionChart timeline={timeline} />
             {/* Session summary and export will be added here */}
             {/* Session Summary */}
-            <SessionSummary timeline={timeline} />
+            <MemoSessionSummary timeline={timeline} />
           </div>
         </div>
       )}
@@ -451,6 +449,6 @@ const FaceSentiment = () => {
       </div>
     </div>
   );
-};
+});
 
 export default FaceSentiment;

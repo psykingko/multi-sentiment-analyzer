@@ -173,6 +173,9 @@ const SentimentResult = ({ data }) => {
     return null;
   };
 
+  // Mobile check
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+
   return (
     <div className="mt-10 w-full max-w-5xl mx-auto">
       <h2 className="unbounded-bold text-xl mb-4 z-10 relative text-white text-left">Sentence-wise Sentiment</h2>
@@ -232,7 +235,7 @@ const SentimentResult = ({ data }) => {
                 strokeWidth={3}
                 dot={{ r: 6, stroke: '#FFD700', strokeWidth: 2.5, fill: '#181A1B' }}
                 activeDot={{ r: 10, stroke: '#FFD700', strokeWidth: 4, fill: '#FFD700', filter: 'drop-shadow(0 0 8px #FFD70088)' }}
-                isAnimationActive={true}
+                isAnimationActive={!isMobile}
               />
             </LineChart>
           </ResponsiveContainer>

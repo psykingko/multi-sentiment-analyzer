@@ -1,5 +1,5 @@
 import InputBox from "../components/InputBox";
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback, useMemo } from "react";
 import axios from "axios";
 
 import SentimentResult from "../components/SentimentResult";
@@ -10,6 +10,7 @@ import { analysisHistory } from "../lib/supabase";
 import { getBackendUrl } from '../utils/getBackendUrl';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import TextAnalysisPDF from '../components/TextAnalysisPDF';
+import React from "react";
 
 const instructions = [
   "Select the analysis model (Rule-Based or Deep Learning).",
@@ -17,6 +18,45 @@ const instructions = [
   "Click 'Analyze' to process your text.",
   "View the sentiment and emotion results below."
 ];
+
+const SentimentResultsSection = React.memo(function SentimentResultsSection({
+  hasResults, glow, result, summary, currentText, user, PDFDownloadLink, TextAnalysisPDF
+}) {
+  return (
+    <section className="w-full mt-8 mb-10">
+      {hasResults && (
+        <div className={`rounded-2xl border border-white/20 shadow-xl p-8 backdrop-blur-md bg-white/5 text-white transition-all duration-700 ${glow ? 'ring-4 ring-[#FFD700] ring-opacity-60 shadow-yellow-400/40' : ''}`}>
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+            <h2 className="unbounded-bold text-2xl text-[#FFD700]">Sentiment Results</h2>
+            {hasResults && (
+              <PDFDownloadLink
+                document={<TextAnalysisPDF analysis={result} summary={summary} userText={currentText} user={user} />}
+                fileName="text-analysis-result.pdf"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#FFD700] text-[#181A1B] unbounded-bold text-base shadow hover:bg-[#5fffe0] transition"
+              >
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#181A1B" strokeWidth="2" className="inline-block"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"/></svg>
+                Download PDF
+              </PDFDownloadLink>
+            )}
+          </div>
+          <SentimentResult data={result} />
+          {summary && (
+            <>
+              <div className="mt-10">
+                <h2 className="unbounded-bold text-2xl mb-6 text-[#FFD700] text-left">Paragraph Mental State & Distribution</h2>
+                <Summary summary={summary} section="distribution" />
+              </div>
+              <div className="mt-10">
+                <h2 className="unbounded-bold text-2xl mb-6 text-[#FFD700] text-left">Paragraph Summary</h2>
+                <Summary summary={summary} section="summary" />
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </section>
+  );
+});
 
 export default function Analyzer() {
   const { user } = useAuth();
@@ -27,12 +67,12 @@ export default function Analyzer() {
   const [loading, setLoading] = useState(false);
   const [glow, setGlow] = useState(false);
   const [currentText, setCurrentText] = useState("");
-  const [refreshKey, setRefreshKey] = useState(0); // Add this line
-  const resultsRef = useRef(null); // NEW
+  const [refreshKey, setRefreshKey] = useState(0);
+  const resultsRef = useRef(null);
 
   const BACKEND_URL = getBackendUrl();
 
-  async function handleAnalyze(text, selectedModel) {
+  const handleAnalyze = useCallback(async (text, selectedModel) => {
     setLoading(true);
     setCurrentText(text);
     try {
@@ -51,7 +91,6 @@ export default function Analyzer() {
         }
       }, 100);
 
-      // Save analysis to database if user is authenticated
       if (user) {
         try {
           await analysisHistory.saveAnalysis(user.id, {
@@ -60,7 +99,7 @@ export default function Analyzer() {
             results: response.data.results,
             summary: response.data.paragraph_sentiment,
           });
-          setRefreshKey(prev => prev + 1); // Increment refreshKey after saving
+          setRefreshKey(prev => prev + 1);
         } catch (error) {
           console.error('Failed to save analysis:', error);
         }
@@ -71,9 +110,9 @@ export default function Analyzer() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [BACKEND_URL, user]);
 
-  const handleSelectAnalysis = (analysis) => {
+  const handleSelectAnalysis = useCallback((analysis) => {
     setResult(analysis.results);
     setSummary(analysis.summary);
     setCurrentText(analysis.text);
@@ -83,8 +122,8 @@ export default function Analyzer() {
       if (resultsRef.current) {
         resultsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
       }
-    }, 100); // Wait for render
-  };
+    }, 100);
+  }, []);
 
   return (
     <div className="flex flex-col items-center w-full min-h-screen bg-transparent px-2">
@@ -96,39 +135,16 @@ export default function Analyzer() {
           {/* Hero Input Section */}
           <section className="w-full">
             <InputBox model={model} setModel={setModel} onAnalyze={handleAnalyze} loading={loading} />
-            {/* Sentiment Results directly below input if present */}
-            <section className="w-full mt-8 mb-10" ref={resultsRef}>
-              {hasResults && (
-                <div className={`rounded-2xl border border-white/20 shadow-xl p-8 backdrop-blur-md bg-white/5 text-white transition-all duration-700 ${glow ? 'ring-4 ring-[#FFD700] ring-opacity-60 shadow-yellow-400/40' : ''}`}>
-                  <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-                    <h2 className="unbounded-bold text-2xl text-[#FFD700]">Sentiment Results</h2>
-                    {hasResults && (
-                      <PDFDownloadLink
-                        document={<TextAnalysisPDF analysis={result} summary={summary} userText={currentText} user={user} />}
-                        fileName="text-analysis-result.pdf"
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#FFD700] text-[#181A1B] unbounded-bold text-base shadow hover:bg-[#5fffe0] transition"
-                      >
-                        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#181A1B" strokeWidth="2" className="inline-block"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"/></svg>
-                        Download PDF
-                      </PDFDownloadLink>
-                    )}
-                  </div>
-                  <SentimentResult data={result} />
-                  {summary && (
-                    <>
-                      <div className="mt-10">
-                        <h2 className="unbounded-bold text-2xl mb-6 text-[#FFD700] text-left">Paragraph Mental State & Distribution</h2>
-                        <Summary summary={summary} section="distribution" />
-                      </div>
-                      <div className="mt-10">
-                        <h2 className="unbounded-bold text-2xl mb-6 text-[#FFD700] text-left">Paragraph Summary</h2>
-                        <Summary summary={summary} section="summary" />
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-            </section>
+            <SentimentResultsSection
+              hasResults={hasResults}
+              glow={glow}
+              result={result}
+              summary={summary}
+              currentText={currentText}
+              user={user}
+              PDFDownloadLink={PDFDownloadLink}
+              TextAnalysisPDF={TextAnalysisPDF}
+            />
           </section>
 
           {/* Divider */}

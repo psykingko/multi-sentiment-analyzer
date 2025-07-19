@@ -6,6 +6,7 @@ import OldBackground from '../components/OldBackground';
 import { FileText, Smile, ShieldCheck, Users } from "lucide-react";
 import { fetchGlobalInsights } from '../utils/fetchInsights';
 import faceScannerImg from '../assets/face-scanner.png';
+import faceScannerWebp from '../assets/face-scanner.webp';
 
 const features = [
   {
@@ -19,7 +20,10 @@ const features = [
     title: "Face Analysis",
     desc: "Analyze facial expressions in real-time for emotion and sentiment.",
     icon: (
-      <img src={faceScannerImg} alt="Face Analysis" className="w-8 h-8 mb-2" />
+      <picture>
+        <source srcSet={faceScannerWebp} type="image/webp" />
+        <img src={faceScannerImg} alt="Face Analysis" className="w-8 h-8 mb-2" loading="lazy" />
+      </picture>
     ),
   },
   {
