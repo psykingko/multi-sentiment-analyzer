@@ -14,21 +14,10 @@ import {
 import { Fragment, useMemo } from "react";
 
 // Simple emotion lexicon for demo word highlighting
-const EMOTION_LEXICON = {
-  joy: ["happy", "joy", "delight", "pleasure", "smile", "cheerful", "glad"],
-  sadness: ["sad", "cry", "tears", "sorrow", "grief", "unhappy", "depressed"],
-  anger: ["angry", "rage", "mad", "furious", "irritated", "annoyed"],
-  fear: ["fear", "scared", "afraid", "terrified", "panic", "nervous"],
-  surprise: ["surprised", "amazed", "astonished", "shocked", "startled"],
-  disgust: ["disgust", "gross", "nausea", "repulsed", "revolted"],
-  contempt: ["contempt", "disdain", "scorn", "mock", "sneer"],
-  positive: ["good", "great", "excellent", "love", "wonderful", "best"],
-  negative: ["bad", "terrible", "worst", "hate", "awful", "poor"],
-  neutral: [],
-};
+
 
 // Sleek SVG icon mapping for each sentiment
-const SENTIMENT_ICONS = {
+export const SENTIMENT_ICONS = {
   positive: (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 15s1.5 2 4 2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
   ),

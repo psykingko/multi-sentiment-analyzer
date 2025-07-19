@@ -9,14 +9,11 @@ export default function FaceScanner() {
         className="w-full flex flex-col items-center justify-center flex-1 overflow-y-auto"
         
       >
-        <h1 className="unbounded-bold text-4xl md:text-5xl mb-4 tracking-widest text-white text-center drop-shadow-lg">
+        <h1 className="unbounded-bold text-4xl md:text-5xl mb-4 tracking-widest text-[#FFD700] text-center drop-shadow-lg">
           Face Scan
         </h1>
         <FaceSentiment />
       </section>
-      {/* Divider */}
-      <hr className="w-full my-10 border-0 h-1 bg-gradient-to-r from-transparent via-[#FFD700] to-transparent shadow-[0_0_8px_2px_#FFD70044] rounded-full" />
-      {/* Analysis Results and How to Use will be rendered by FaceSentiment or below */}
     </div>
   );
 } 

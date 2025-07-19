@@ -30,30 +30,41 @@ const features = [
 ];
 
 const aiModels = [
-  {
-    name: "BERT (Bidirectional Encoder Representations from Transformers)",
-    description: "Advanced transformer model for deep understanding of text context and sentiment analysis with 99.2% accuracy.",
-    type: "Deep Learning",
-    accuracy: "99.2%"
-  },
-  {
-    name: "RoBERTa (Robustly Optimized BERT Pretraining Approach)",
-    description: "Enhanced BERT variant with improved training methodology for superior sentiment classification performance.",
-    type: "Deep Learning", 
-    accuracy: "99.5%"
-  },
+  // Text Analysis Models
   {
     name: "VADER (Valence Aware Dictionary and sEntiment Reasoner)",
-    description: "Rule-based sentiment analyzer optimized for social media text with real-time processing capabilities.",
-    type: "Rule-Based",
-    accuracy: "85.3%"
+    description: "Rule-based sentiment analyzer optimized for social media and general text. Provides fast, real-time sentiment and emotion analysis.",
+    type: "Rule-Based (Text)",
+    accuracy: 85
   },
   {
     name: "TextBlob",
-    description: "Lightweight sentiment analysis library providing fast polarity and subjectivity scores for quick insights.",
-    type: "Rule-Based",
-    accuracy: "78.9%"
-  }
+    description: "Lightweight rule-based sentiment analysis library for quick polarity and subjectivity scores.",
+    type: "Rule-Based (Text)",
+    accuracy: 78
+  },
+  {
+    name: "DistilBERT",
+    description: "A distilled version of BERT, providing deep learning-based sentiment and emotion analysis with high accuracy and efficiency.",
+    type: "Deep Learning (Text)",
+    accuracy: 97,
+    accuracyNote: "~97% (on standard benchmarks)"
+  },
+  // Face Scan Models
+  {
+    name: "MediaPipe Face Mesh",
+    description: "Google's MediaPipe Face Mesh extracts facial landmarks. We use custom geometric rules on these points for fast, privacy-friendly emotion detection.",
+    type: "Rule-Based (Face)",
+    accuracy: 80,
+    accuracyNote: "Estimated, may vary by use case"
+  },
+  {
+    name: "face-api.js",
+    description: "Deep learning library for face detection and emotion recognition in the browser. Used for advanced facial emotion analysis.",
+    type: "Deep Learning (Face)",
+    accuracy: 92,
+    accuracyNote: "Estimated, may vary by use case"
+  },
 ];
 
 const stats = [
@@ -246,7 +257,7 @@ export default function Home() {
           initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
-          className="unbounded-black text-4xl md:text-6xl mb-6 tracking-widest text-white text-center"
+          className="unbounded-black  text-4xl md:text-6xl mb-6 tracking-widest text-[#FFD700] text-center"
         >
           Multi-Sentiment Analyzer
         </motion.h1>
@@ -295,7 +306,7 @@ export default function Home() {
       {/* 1. Why Choose Multi-Sentiment Analyzer? (feature cards) */}
       <section className="w-full max-w-4xl mx-auto mb-16 px-4">
         <div
-          className="unbounded-bold text-3xl md:text-4xl mb-10 tracking-widest text-white text-center rounded-2xl py-6 px-2 shadow-xl"
+          className="unbounded-bold text-3xl md:text-4xl mb-10 tracking-widest text-[#FFD700] text-center rounded-2xl py-6 px-2 shadow-xl"
         >
           Why Choose Multi-Sentiment Analyzer?
         </div>
@@ -308,7 +319,7 @@ export default function Home() {
               key={f.title}
               className="rounded-2xl border border-white/20 shadow-xl p-6 flex flex-col items-center text-center backdrop-blur-md bg-white/5 cursor-pointer border border-white/20"
               whileHover={{ scale: 1.01, borderColor: '#FFD700' }}
-              whileTap={{ scale: 0.98 }}
+             
               transition={{ type: 'spring', stiffness: 300, damping: 20, duration: 0.6 }}
             >
               <div className="mb-4">
@@ -327,7 +338,7 @@ export default function Home() {
       {/* 2. How it works (two cards: Text Analyzer and Face Scan) */}
       <section className="w-full max-w-4xl mx-auto mb-16 px-4">
         <div
-          className="unbounded-bold text-3xl md:text-4xl mb-10 tracking-widest text-white text-center rounded-2xl py-6 px-2 shadow-xl"
+          className="unbounded-bold text-3xl md:text-4xl mb-10 tracking-widest text-[#FFD700] text-center rounded-2xl py-6 px-2 shadow-xl"
         >
           How it works
         </div>
@@ -336,10 +347,10 @@ export default function Home() {
           <motion.div
             className="rounded-2xl border border-white/20 shadow-xl p-8 flex flex-col bg-white/5 backdrop-blur-md"
             whileHover={{ scale: 1.01, borderColor: '#FFD700' }}
-            whileTap={{ scale: 0.98 }}
+           
             transition={{ type: 'spring', stiffness: 600, damping: 18 }}
           >
-            <h3 className="unbounded-bold text-2xl mb-4 text-[#FFD700] text-center">Text Analyzer</h3>
+            <h3 className="unbounded-bold text-2xl mb-4 text-white text-center">Text Analyzer</h3>
             <ol className="list-decimal list-inside inter-regular text-white/90 space-y-2">
               <li>Select the analysis model: Rule-Based (fast, simple) or Deep Learning (advanced, local only).</li>
               <li>Type, paste, or speak your text into the input box.</li>
@@ -351,10 +362,10 @@ export default function Home() {
           <motion.div
             className="rounded-2xl border border-white/20 shadow-xl p-8 flex flex-col bg-white/5 backdrop-blur-md"
             whileHover={{ scale: 1.01, borderColor: '#FFD700' }}
-            whileTap={{ scale: 0.98 }}
+            
             transition={{ type: 'spring', stiffness: 600, damping: 18 }}
           >
-            <h3 className="unbounded-bold text-2xl mb-4 text-[#FFD700] text-center">Face Scan</h3>
+            <h3 className="unbounded-bold text-2xl mb-4 text-white text-center">Face Scan</h3>
             <ol className="list-decimal list-inside inter-regular text-white/90 space-y-2">
               <li>Click <span className="font-bold">Discover Face Scan</span> on the home page or in the menu.</li>
               <li>Allow camera access when prompted (your video stays private).</li>
@@ -370,7 +381,7 @@ export default function Home() {
       {/* 3. AI Models Powering Our Analysis (AI model cards) */}
       <section className="w-full max-w-4xl mx-auto mb-16 px-4">
       <div
-          className="unbounded-bold text-3xl md:text-4xl mb-10 tracking-widest text-white text-center rounded-2xl py-6 px-2 shadow-xl"
+          className="unbounded-bold text-3xl md:text-4xl mb-10 tracking-widest text-[#FFD700] text-center rounded-2xl py-6 px-2 shadow-xl"
         >
           AI Models Powering Our Analysis
         </div>
@@ -379,28 +390,43 @@ export default function Home() {
               <motion.div
                 key={model.name}
                 className="rounded-2xl p-8 backdrop-blur-md border border-white/20 shadow-xl bg-white/5 flex flex-col justify-between items-center h-full"
-                whileHover={{ scale: 1.015, borderColor: '#FFD700' }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: 1.01, borderColor: '#FFD700' }}
                 transition={{ type: 'spring', stiffness: 300, damping: 20, duration: 0.15 }}
               >
                {/* Golden Donut Chart for Accuracy */}
                
                 <div className="w-full flex-1 flex flex-col items-center">
-                  <div className="flex items-start justify-between mb-3 w-full">
-                    <h4 className="unbounded-bold text-lg text-white mb-2">{model.name}</h4>
-                    <span className={`px-3 py-1 rounded-full text-xs inter-bold ${
-                      model.type === "Deep Learning" 
-                        ? "bg-gradient-to-r from-purple-500/20 to-blue-500/20 text-purple-300 border border-purple-500/30"
-                        : "bg-gradient-to-r from-green-500/20 to-teal-500/20 text-green-300 border border-green-500/30"
-                    }`}>
+                  <div className="w-full flex flex-col items-center mb-3">
+                    <h4 className="unbounded-bold text-2xl text-white mb-1 text-center">{model.name}</h4>
+                    <span
+                      className={`mt-1 px-3 py-1 rounded-full text-xs inter-bold border font-semibold tracking-wide text-center
+                        ${model.type.includes('Deep Learning') && model.type.includes('Text') ? 'bg-blue-900/30 text-blue-300 border-blue-400/40' : ''}
+                        ${model.type.includes('Rule-Based') && model.type.includes('Text') ? 'bg-green-900/30 text-green-300 border-green-400/40' : ''}
+                        ${model.type.includes('Deep Learning') && model.type.includes('Face') ? 'bg-purple-900/30 text-purple-200 border-purple-400/40' : ''}
+                        ${model.type.includes('Rule-Based') && model.type.includes('Face') ? 'bg-teal-900/30 text-teal-200 border-teal-400/40' : ''}
+                      `}
+                    >
                       {model.type}
                     </span>
                   </div>
                   <p className="inter-regular text-sm text-white/80 mb-3 w-full" style={{ minHeight: '48px' }}>{model.description}</p>
                 </div>
                 <div className="flex flex-col items-center justify-end mt-auto">
-                  <span className="text-xs text-white/70 mb-1 tracking-wider">Accuracy</span>
-                  <GoldenDonut percent={parseFloat(model.accuracy)} />
+                  
+                  {typeof model.accuracy === 'number' ? (
+                    <>
+                      <GoldenDonut percent={model.accuracy} />
+                      <span className="text-xs text-white/70 mb-1 tracking-wider">Accuracy</span>
+                      {model.accuracyNote && (
+                        <span className="text-xs text-white/50 italic mt-1">{model.accuracyNote}</span>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <span className="inline-block px-3 py-1 rounded-full bg-gray-800 text-white/80 text-xs font-semibold mb-2 mt-2 border border-gray-600">{model.accuracy}</span>
+                      <span className="text-xs text-white/70 mb-1 tracking-wider">Accuracy Info</span>
+                    </>
+                  )}
                 </div>
               </motion.div>
             ))}
@@ -417,7 +443,7 @@ export default function Home() {
       {/* 5. Our Impact in Numbers (animated stats) */}
       <section className="w-full max-w-4xl mx-auto mb-16 px-4">
       <div
-          className="unbounded-bold text-3xl md:text-4xl mb-10 tracking-widest text-white text-center rounded-2xl py-6 px-2 shadow-xl "
+          className="unbounded-bold text-3xl md:text-4xl mb-10 tracking-widest text-[#FFD700] text-center rounded-2xl py-6 px-2 shadow-xl "
         >
           Our Impact in Numbers
         </div>
@@ -446,7 +472,7 @@ export default function Home() {
       {/* 6. Frequently Asked Questions (FAQ) */}
       <section className="w-full max-w-4xl mx-auto mb-16 px-4">
       <div
-          className="unbounded-bold text-3xl md:text-4xl mb-10 tracking-widest text-white text-center rounded-2xl py-6 px-2 shadow-xl "
+        className="unbounded-bold text-3xl md:text-4xl mb-10 tracking-widest text-[#FFD700] text-center rounded-2xl py-6 px-2 shadow-xl "
         >
           Frequently Asked Questions
         </div>

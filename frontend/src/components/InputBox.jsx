@@ -78,7 +78,7 @@ const InputBox = ({ onAnalyze, loading, model = "rule", setModel }) => {
       autoComplete="off"
     >
       {/* Model selection dropdown (Headless UI Listbox) */}
-      <div className="mb-2 flex flex-col md:flex-row items-center gap-2 w-full">
+      <div className="mb-4 flex flex-col md:flex-row  items-center gap-2 w-full">
         <label htmlFor="model-select" className="inter-medium text-white/80 min-w-[70px]">
           Model:
         </label>
@@ -163,7 +163,7 @@ const InputBox = ({ onAnalyze, loading, model = "rule", setModel }) => {
         <div className="flex w-full items-center gap-2">
           <button
             type="submit"
-            className="transition-all duration-200 px-8 py-2 bg-[#FFD700] text-black rounded-full unbounded-bold shadow-lg hover:scale-105 border-2 border-[#FFD700]/80 focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-60 flex-grow text-center"
+            className="transition-all duration-200 px-8 py-2 bg-[#FFD700] text-black rounded-full unbounded-bold shadow-lg hover:scale-105 border-2 border-[#FFD700]/80 focus:outline-none focus:ring-2 focus:ring-[#FFD700] flex-grow text-center disabled:opacity-100 "
             disabled={loading || !text.trim()}
             style={{ minWidth: 120 }}
           >
@@ -199,7 +199,7 @@ const InputBox = ({ onAnalyze, loading, model = "rule", setModel }) => {
       </div>
       {/* Onboarding/Help Text as a bulleted list (now below controls) */}
       <div className="mt-4">
-        <ul className="list-disc list-inside space-y-1 inter-regular text-white/80 text-base">
+        <ul className="list-disc list-inside space-y-1 inter-regular text-white/90 text-base">
           <li>Enter or speak your text below.</li>
           <li>Choose a model for analysis.</li>
           <li>Click <span className="text-[#FFD700] font-bold">Analyze</span> to see results.</li>

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const AuthContext = createContext();
 
@@ -15,6 +16,8 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     // Get initial session
@@ -34,8 +37,21 @@ export const AuthProvider = ({ children }) => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // After login, redirect to the saved path if present
+  useEffect(() => {
+    if (user) {
+      const redirectPath = localStorage.getItem('postLoginRedirect');
+      if (redirectPath) {
+        localStorage.removeItem('postLoginRedirect');
+        navigate(redirectPath, { replace: true });
+      }
+    }
+  }, [user, navigate]);
+
   const login = async (provider) => {
     try {
+      // Save current path for post-login redirect
+      localStorage.setItem('postLoginRedirect', location.pathname + location.search + location.hash);
       const { error } = await supabase.auth.signInWithOAuth({
         provider: provider,
         options: {

@@ -1,10 +1,129 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { FaceMesh } from "@mediapipe/face_mesh";
 import { Camera } from "@mediapipe/camera_utils";
 import { getEmoji, predictEmotion, detectFaceEmotion } from "../utils/emotionUtil";
 import FaceEmotionChart from './FaceEmotionChart';
-import EmotionIntensityMeter from './EmotionIntensityMeter';
 import humanHeadPng from '../assets/face-scanner.png';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { Listbox, Transition } from '@headlessui/react';
+import { ChevronUpDownIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { Fragment } from 'react';
+import { SENTIMENT_ICONS as TEXT_SENTIMENT_ICONS } from './SentimentResult';
+import { EMOTION_COLORS as TEXT_EMOTION_COLORS, EMOTION_ICONS as TEXT_EMOTION_ICONS } from './Summary';
+
+const EMOTION_COLORS = {
+  Happy: '#FFD700',
+  Sad: '#60a5fa',
+  Angry: '#FF6B6B',
+  Surprised: '#34d399',
+  Fearful: '#818cf8',
+  Disgusted: '#a3e635',
+  Neutral: '#888',
+  Contempt: '#fbbf24',
+  'No Face': '#444',
+  'Deep model not available': '#8884d8',
+  Unknown: '#8884d8',
+};
+
+function SessionSummary({ timeline }) {
+  if (!timeline || timeline.length === 0) return null;
+
+  // Calculate most frequent emotion
+  const emotionCounts = {};
+  let confidenceSum = 0;
+  timeline.forEach(({ emotion, confidence }) => {
+    emotionCounts[emotion] = (emotionCounts[emotion] || 0) + 1;
+    confidenceSum += confidence;
+  });
+  const mostFrequentEmotion = Object.entries(emotionCounts).reduce((a, b) => (a[1] > b[1] ? a : b))[0];
+  const averageConfidence = (confidenceSum / timeline.length).toFixed(1);
+
+  // Pie chart data
+  const pieData = Object.entries(emotionCounts).map(([emotion, count]) => ({
+    name: emotion,
+    value: count,
+  }));
+  const total = timeline.length;
+
+  // For emotion cards (distribution)
+  const distribution = Object.entries(emotionCounts).map(([emotion, count]) => ({
+    name: emotion,
+    percent: Math.round((count / total) * 100),
+  }));
+
+  return (
+    <div className="w-full flex flex-col items-center justify-center mt-10">
+      <h3 className="unbounded-bold text-2xl mb-4 text-[#FFD700] text-center">Session Summary</h3>
+      <div className="flex flex-wrap gap-8 justify-center w-full mb-8">
+        <div className="flex flex-col items-center bg-[#181A1B] border border-cyan-400/40 rounded-xl p-6 shadow-lg min-w-[160px] max-w-xs">
+          <span className="text-lg font-semibold mb-1 tracking-wide text-cyan-200">Most Frequent Emotion</span>
+          <span className="text-2xl font-bold mt-1" style={{ color: TEXT_EMOTION_COLORS[mostFrequentEmotion] || '#FFD700' }}>{mostFrequentEmotion}</span>
+        </div>
+        <div className="flex flex-col items-center bg-[#181A1B] border border-cyan-400/40 rounded-xl p-6 shadow-lg min-w-[160px] max-w-xs">
+          <span className="text-lg font-semibold mb-1 tracking-wide text-cyan-200">Average Confidence</span>
+          <span className="text-2xl font-bold mt-1 text-[#FFD700]">{averageConfidence}%</span>
+        </div>
+      </div>
+      {/* Emotion Distribution Cards (match text analysis style) */}
+      <div className="flex flex-wrap justify-center gap-6 mt-6 mb-8 w-full">
+        {distribution.map((entry, idx) => (
+          <div
+            key={entry.name}
+            className="flex flex-col items-center justify-center w-36 h-36 rounded-xl shadow border border-[#2e3236] bg-[#181A1B]"
+            style={{ boxShadow: '0 0 8px 1px ' + (TEXT_EMOTION_COLORS[entry.name] || '#FFD700') + '44' }}
+          >
+            <span className="text-2xl mb-1" style={{ color: TEXT_EMOTION_COLORS[entry.name] }}>{TEXT_EMOTION_ICONS[entry.name]}</span>
+            <span className="unbounded-bold text-base" style={{ color: TEXT_EMOTION_COLORS[entry.name] }}>{entry.name}</span>
+            <span className="font-mono text-[#FFD700] text-lg">{entry.percent}%</span>
+          </div>
+        ))}
+      </div>
+      <div className="w-full max-w-md mx-auto">
+        <ResponsiveContainer width="100%" height={260}>
+          <PieChart>
+            <Pie
+              data={pieData}
+              cx="50%"
+              cy="50%"
+              innerRadius={60}
+              outerRadius={100}
+              fill="#8884d8"
+              dataKey="value"
+              isAnimationActive={true}
+              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+            >
+              {pieData.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={TEXT_EMOTION_COLORS[entry.name] || '#FFD700'}
+                  stroke="#181A1B"
+                  style={{ filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.08))" }}
+                />
+              ))}
+            </Pie>
+            <Tooltip
+              content={({ active, payload }) =>
+                active && payload && payload.length ? (
+                  <div className="bg-[#23272b] rounded-full shadow-lg px-4 py-2 border border-[#2e3236] animate-fade-in flex items-center gap-2 min-w-0 max-w-xs mx-auto text-base inter-semibold text-white"
+                    style={{ pointerEvents: 'none', minWidth: 'unset', maxWidth: 180 }}>
+                    <span className="text-xl">{TEXT_EMOTION_ICONS[payload[0].name] || ''}</span>
+                    <span>{payload[0].name}</span>
+                    <span className="ml-2 font-mono">{(payload[0].percent * 100).toFixed(1)}%</span>
+                  </div>
+                ) : null
+              }
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
+const modelOptions = [
+  { value: 'rule', label: 'Fast & Simple (Recommended)' },
+  { value: 'deep', label: 'Advanced AI' },
+];
 
 const FaceSentiment = () => {
   const videoRef = useRef(null);
@@ -13,6 +132,20 @@ const FaceSentiment = () => {
   const [error, setError] = useState("");
   const [mode, setMode] = useState('rule'); // 'rule' or 'deep'
   const [cameraOn, setCameraOn] = useState(false);
+  const [countdown, setCountdown] = useState(5); // NEW
+  const resultsRef = useRef(null);
+
+  // Countdown effect
+  useEffect(() => {
+    let timer;
+    if (scanning && countdown > 0) {
+      timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+    }
+    if (!scanning) {
+      setCountdown(5);
+    }
+    return () => clearTimeout(timer);
+  }, [scanning, countdown]);
 
   // Helper to stop and cleanup video
   const stopVideo = () => {
@@ -29,6 +162,7 @@ const FaceSentiment = () => {
     setError("");
     setScanning(true);
     setCameraOn(true);
+    setCountdown(5); // Reset timer
     let results = [];
     let currentLandmarks = null;
     let faceMesh = null;
@@ -91,6 +225,11 @@ const FaceSentiment = () => {
         });
         setTimeline([...results]);
       }
+      setTimeout(() => {
+        if (resultsRef.current) {
+          resultsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 100);
 
       // Stop everything after 5 seconds
       camera.stop();
@@ -106,56 +245,118 @@ const FaceSentiment = () => {
     }
   };
 
+  // Helper to map Face API emotion to SentimentResult icon key
+  const mapFaceEmotionToIconKey = (emotion) => {
+    switch ((emotion || '').toLowerCase()) {
+      case 'happy': return 'joy';
+      case 'sad': return 'sadness';
+      case 'angry': return 'anger';
+      case 'surprised': return 'surprise';
+      case 'fearful': return 'fear';
+      case 'disgusted': return 'disgust';
+      case 'contempt': return 'contempt';
+      case 'neutral': return 'neutral';
+      case 'positive': return 'positive';
+      case 'negative': return 'negative';
+      default: return 'neutral';
+    }
+  };
+
   return (
     <div className="w-full flex flex-col items-center justify-center">
       {/* Main Card (like Text Analyzer input box) */}
-      <div className="w-full max-w-5xl flex flex-col items-center justify-center rounded-2xl border border-white/20 shadow-xl p-8 md:p-10 backdrop-blur-md bg-white/5 text-white mb-10">
+      <div className="w-full max-w-5xl flex flex-col items-center justify-center rounded-2xl border border-white/20 shadow-xl p-4 sm:p-6 md:p-10 backdrop-blur-md bg-white/5 text-white mb-6 sm:mb-10">
         {/* Model Selector and Button Row */}
-        <div className="w-full flex flex-row items-center justify-center gap-6 ">
-          <select
-            value={mode}
-            onChange={e => setMode(e.target.value)}
-            className="rounded-xl bg-[#181A1B]/80 py-2 px-2 text-white shadow focus:outline-none focus:ring-2 focus:ring-[#00FFCC] border border-white/20 hover:border-[#00FFCC] transition-all duration-200 backdrop-blur-md text-base font-semibold w-full max-w-xs"
-          >
-            <option value="rule">Fast & Simple</option>
-            <option value="deep">Advanced AI</option>
-          </select>
+        <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 ">
+          {/* Sleek model selector dropdown (Headless UI Listbox) */}
+          <div className="w-full max-w-xs mb-3 sm:mb-0">
+            <Listbox value={mode} onChange={setMode} disabled={scanning}>
+              <div className="relative mt-1">
+                <Listbox.Button className="relative w-full cursor-pointer rounded-xl bg-[#181A1B]/80 py-2 pl-4 pr-10 text-left text-white shadow focus:outline-none focus:ring-2 focus:ring-[#FFD700] border border-white/20 hover:border-[#FFD700] focus:border-[#FFD700] transition-all duration-200 backdrop-blur-md">
+                  <span className="block truncate inter-regular">
+                    {modelOptions.find((opt) => opt.value === mode)?.label}
+                  </span>
+                  <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                    <ChevronUpDownIcon className="h-5 w-5 text-[#FFD700]" aria-hidden="true" />
+                  </span>
+                </Listbox.Button>
+                <Transition
+                  as={Fragment}
+                  leave="transition ease-in duration-100"
+                  leaveFrom="opacity-100"
+                  leaveTo="opacity-0"
+                >
+                  <Listbox.Options className="absolute z-10 mt-2 max-h-60 w-full min-w-[260px] overflow-auto rounded-xl bg-[#181A1B]/95 py-2 shadow-xl ring-1 ring-[#FFD700]/30 border border-[#FFD700]/40 focus:outline-none backdrop-blur-md">
+                    {modelOptions.map((option) => (
+                      <Listbox.Option
+                        key={option.value}
+                        className={({ active, selected }) =>
+                          `relative cursor-pointer select-none py-3 pl-10 pr-4 inter-regular text-base rounded-lg transition-all duration-150
+                          ${active ? 'bg-[#FFD700]/10 text-[#FFD700]' : 'text-white/90'}
+                          ${selected ? 'font-bold bg-[#FFD700]/20 text-[#FFD700]' : ''}`
+                        }
+                        value={option.value}
+                      >
+                        {({ selected }) => (
+                          <>
+                            <span className={`block truncate ${selected ? 'font-bold' : ''}`}>{option.label}</span>
+                            {selected ? (
+                              <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+                                <CheckIcon className="h-5 w-5 text-[#FFD700]" aria-hidden="true" />
+                              </span>
+                            ) : null}
+                          </>
+                        )}
+                      </Listbox.Option>
+                    ))}
+                  </Listbox.Options>
+                </Transition>
+              </div>
+            </Listbox>
+          </div>
           <button
-            className="w-full max-w-xs px-4 py-2 bg-[#00FFCC] text-[#181A1B] rounded-full unbounded-bold shadow-lg hover:scale-105 border-2 border-[#00FFCC]/80 focus:outline-none focus:ring-2 focus:ring-[#00FFCC] disabled:opacity-60 text-s transition-all"
+            className="w-full max-w-xs px-4 py-2 bg-[#FFD700] text-[#181A1B] text-black rounded-full unbounded-bold shadow-lg hover:scale-105 border-2 border-[#FFD700]/80 focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-60 flex-grow flex items-center justify-center gap-2 text-base sm:text-lg"
             onClick={handleAnalyzeFace}
             disabled={scanning}
           >
-            {scanning ? "Scanning..." : "Start Face Scan (5s)"}
+            {scanning ? (
+              <>
+                Scanning... 
+                <span className="ml-2 px-2 py-0.5 rounded bg-[#181A1B] text-[#FFD700] text-lg font-mono min-w-[2.5rem] text-center animate-pulse">{countdown}</span>
+              </>
+            ) : (
+              "Start Face Scan (5s)"
+            )}
           </button>
         </div>
         {/* Camera Preview or SVG */}
-        <div className="flex justify-center items-center mt-2  w-full min-h-[220px]">
-          {cameraOn ? (
-            <video
-              ref={videoRef}
-              autoPlay
-              muted
-              width="220"
-              height="220"
-              className="rounded-2xl border border-white/20 bg-[#181A1B] shadow-xl object-cover"
-            />
-          ) : (
-            <div className="flex items-center justify-center w-[290px] h-[190px] rounded-2xl border border-white/20 bg-[#181A1B] shadow-xl">
-              {/* Human Head Silhouette PNG with gold filter */}
+        <div className="flex justify-center items-center mt-4 w-full">
+          <div className="flex items-center justify-center w-[290px] h-[190px] rounded-2xl border border-white/20 bg-[#181A1B] shadow-xl">
+            {cameraOn ? (
+              <video
+                ref={videoRef}
+                autoPlay
+                muted
+                width={290}
+                height={190}
+                className="object-contain w-full h-full rounded-2xl"
+              />
+            ) : (
               <img
                 src={humanHeadPng}
                 width={120}
                 height={120}
                 alt="Human Head Silhouette"
                 style={{ filter: 'brightness(1.2) sepia(1) hue-rotate(10deg) saturate(8) contrast(1.2)' }}
+                className="w-[120px] h-[120px]"
               />
-            </div>
-          )}
+            )}
+          </div>
         </div>
-        {error && <div className="text-red-400 mb-2 inter-regular font-semibold">{error}</div>}
+        {error && <div className="text-red-400 mb-2 inter-regular font-semibold text-sm sm:text-base">{error}</div>}
         {/* Tips/Steps for Using Face Scan */}
-        <div className="w-full flex flex-wrap justify-center gap-4 mt-2">
-          <ul className="list-disc list-inside flex flex-row flex-wrap gap-x-8 gap-y-1 inter-regular text-white/80 text-base text-left mx-auto max-w-2xl">
+        <div className="w-full flex flex-wrap justify-center gap-2 sm:gap-4 mt-2">
+          <ul className="list-disc list-inside flex flex-col sm:flex-row flex-wrap gap-x-4 gap-y-1 inter-regular text-white/80 text-sm sm:text-base text-left mx-auto max-w-2xl">
             <li>Ensure your face is well-lit and visible to the camera.</li>
             <li>Choose the analysis model above.</li>
             <li>Click <span className="text-[#FFD700] font-bold">Start Face Scan</span> and look at the camera.</li>
@@ -166,24 +367,26 @@ const FaceSentiment = () => {
       </div>
       {/* Results Section */}
       {timeline.length > 0 && (
-        <div className="w-full max-w-3xl mx-auto flex flex-col items-center">
-          <hr className="w-full my-10 border-0 h-1 bg-gradient-to-r from-transparent via-[#FFD700] to-transparent shadow-[0_0_8px_2px_#FFD70044] rounded-full" />
-          <div className="w-full rounded-2xl border border-white/20 shadow-xl p-8 backdrop-blur-md bg-white/5 text-white mb-10">
-            <h2 className="unbounded-bold text-3xl mb-8 text-[#FFD700] text-center">Face Scan Results</h2>
-            <h3 className="unbounded-bold text-2xl mb-6 text-[#ffffff] text-center">Face Emotion Timeline (5s)</h3>
+        <div className="w-full max-w-5xl mx-auto flex flex-col items-center" ref={resultsRef}>
+          <hr className="w-full my-8 sm:my-10 border-0 h-1 bg-gradient-to-r from-transparent via-[#FFD700] to-transparent shadow-[0_0_8px_2px_#FFD70044] rounded-full" />
+          <div className="w-full rounded-2xl border border-white/20 shadow-xl p-4 sm:p-8 backdrop-blur-md bg-white/5 text-white mb-6 sm:mb-10">
+            <h2 className="unbounded-bold text-2xl sm:text-3xl mb-6 sm:mb-8 text-[#FFD700]">Face Scan Results</h2>
+            <h3 className="unbounded-bold text-lg sm:text-2xl mb-4 sm:mb-6 text-[#ffffff]">Face Emotion Timeline (5s)</h3>
             {timeline.some(entry => entry.emotion === 'Deep model not available') && (
-              <div className="mb-4 text-yellow-400 font-semibold text-base text-center">Advanced AI model is not available in this environment. Please use 'Fast & Simple (Rule-Based)' or install the deep model locally.</div>
+              <div className="mb-4 text-yellow-400 font-semibold text-sm sm:text-base text-center">Advanced AI model is not available in this environment. Please use 'Fast & Simple (Rule-Based)' or install the deep model locally.</div>
             )}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 justify-center mb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-4 justify-center mb-6 sm:mb-8">
               {timeline.map((entry, i) => (
                 <div
                   key={i}
-                  className="p-3 rounded-2xl border border-white/10 bg-[#23272b] shadow text-center flex flex-col items-center min-w-[110px] max-w-[130px]"
+                  className="p-2 sm:p-3 rounded-2xl border border-white/10 bg-[#23272b] shadow text-center flex flex-col items-center min-w-[80px] max-w-[110px] sm:min-w-[110px] sm:max-w-[130px]"
                 >
                   <p className="text-xs text-white/60 inter-regular mb-1">{entry.time}</p>
-                  <p className="text-xl mt-1 mb-1 capitalize unbounded-medium" style={{ color: '#ffffff', wordBreak: 'break-word' }}>
-                    {entry.emoji} {entry.emotion}
-                  </p>
+                  <div className="text-base sm:text-lg mt-1 mb-1 capitalize unbounded-medium flex items-center justify-center" style={{ color: '#ffffff', wordBreak: 'break-word' }}>
+                    {/* Use SVG icon instead of emoji */}
+                    {TEXT_SENTIMENT_ICONS[mapFaceEmotionToIconKey(entry.emotion)]}
+                    <span className="ml-1">{entry.emotion}</span>
+                  </div>
                   <p className="text-xs text-white/80 inter-regular">
                     Confidence: <span className="font-bold text-[#FFD700]">{entry.confidence}%</span>
                   </p>
@@ -192,19 +395,50 @@ const FaceSentiment = () => {
             </div>
             <FaceEmotionChart timeline={timeline} />
             {/* Session summary and export will be added here */}
+            {/* Session Summary */}
+            <SessionSummary timeline={timeline} />
           </div>
         </div>
       )}
+      {/* Model Options Section (Feature Card Style) */}
+      
       {/* How to Use Section */}
-      <div className="w-full rounded-2xl border border-white/20 shadow-xl p-8 min-h-[180px] flex flex-col justify-center items-center backdrop-blur-md bg-white/5 text-white mt-8 mb-10">
-        <h2 className="unbounded-bold text-2xl mb-4 text-[#FFD700] text-center tracking-wider">How to Use Face Scan</h2>
-        <ol className="list-decimal list-inside space-y-2 inter-regular text-white/90 text-base md:text-lg w-full text-center mx-auto max-w-lg">
+      <hr className="w-full my-8 sm:my-10 border-0 h-1 bg-gradient-to-r from-transparent via-[#FFD700] to-transparent shadow-[0_0_8px_2px_#FFD70044] rounded-full" />
+      <div className="w-full rounded-2xl border border-white/20 shadow-xl p-4 sm:p-8 min-h-[120px] sm:min-h-[180px] flex flex-col justify-center items-center backdrop-blur-md bg-white/5 text-white mt-6 sm:mt-8 mb-6 sm:mb-10">
+        <h2 className="unbounded-bold text-xl sm:text-2xl mb-3 sm:mb-4 text-[#FFD700] text-center tracking-wider">How to Use Face Scan</h2>
+        <ol className="list-decimal list-inside space-y-1 sm:space-y-2 inter-regular text-white/90 text-sm sm:text-base md:text-lg w-full text-center mx-auto max-w-xs sm:max-w-lg">
           <li>Allow camera access when prompted.</li>
           <li>Position your face in the center of the frame.</li>
           <li>Choose the model and click Start Face Scan.</li>
           <li>Hold still and look at the camera for 5 seconds.</li>
           <li>Review your results and insights below.</li>
         </ol>
+      </div>
+      {/* Model Comparison Section */}
+      <div className="w-full rounded-2xl border border-white/20 shadow-xl p-4 sm:p-8 flex flex-col justify-center items-center backdrop-blur-md bg-white/5 text-white mb-6 sm:mb-10">
+        <h2 className="unbounded-bold text-xl sm:text-2xl mb-3 sm:mb-4 text-[#FFD700] text-center tracking-wider">Model Options</h2>
+        <div className="w-full max-w-2xl">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="rounded-xl p-4 border border-white/20 flex flex-col gap-2">
+              <h3 className="unbounded-bold text-lg text-white mb-1">Fast & Simple (Recommended)</h3>
+              <ul className="list-disc list-inside text-sm sm:text-base text-white/80 pl-4">
+                <li>Uses geometric rules on facial landmarks (MediaPipe Face Mesh).</li>
+                <li>No deep learning—runs instantly in your browser.</li>
+                <li>Very fast, works on all devices.</li>
+                <li>Good for basic emotion detection.</li>
+              </ul>
+            </div>
+            <div className="rounded-xl p-4 border border-white/20 flex flex-col gap-2">
+              <h3 className="unbounded-bold text-lg text-white mb-1">Advanced AI</h3>
+              <ul className="list-disc list-inside text-sm sm:text-base text-white/80 pl-4">
+                <li>Uses deep learning models (face-api.js) for emotion recognition.</li>
+                <li>More accurate for subtle/complex emotions.</li>
+                <li>Runs in your browser, but loads larger model files.</li>
+                <li>May be slower to start, but better for nuanced analysis.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

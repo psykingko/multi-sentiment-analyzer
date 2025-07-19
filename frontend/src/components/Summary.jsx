@@ -10,7 +10,7 @@ import {
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
-const EMOTION_COLORS = {
+export const EMOTION_COLORS = {
   Positive: "#00FFCC",
   Negative: "#FF6B6B",
   Neutral: "#FFD700",
@@ -24,7 +24,7 @@ const EMOTION_COLORS = {
 };
 
 // Sleek SVG icon mapping for each sentiment
-const EMOTION_ICONS = {
+export const EMOTION_ICONS = {
   Positive: (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00FFCC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 15s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
   ),
@@ -59,6 +59,7 @@ const EMOTION_ICONS = {
 
 const Summary = ({ summary, section }) => {
   const [animatedCounts, setAnimatedCounts] = useState({});
+  const [isMobile, setIsMobile] = useState(false); // NEW
 
   useEffect(() => {
     if (!summary?.sentiment_counts) return;
@@ -87,6 +88,14 @@ const Summary = ({ summary, section }) => {
     return () => cancelAnimationFrame(frame);
   }, [summary]);
 
+  useEffect(() => {
+    // Responsive check
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   if (!summary) return null;
   const { sentiment: overall_sentiment, average_score, word_count, char_count, mental_state, mental_state_distribution } = summary;
   const data = mental_state_distribution
@@ -97,19 +106,19 @@ const Summary = ({ summary, section }) => {
   if (section === 'distribution') {
     return (
       <div className="flex flex-col items-center justify-center w-full max-w-2xl mx-auto mt-8 mb-4">
-        <div className="h-80 w-full flex items-center justify-center">
+        <div className={isMobile ? "h-56 w-full flex items-center justify-center" : "h-80 w-full flex items-center justify-center"}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={data}
                 cx="50%"
                 cy="50%"
-                innerRadius={60}
-                outerRadius={100}
+                innerRadius={isMobile ? 40 : 60}
+                outerRadius={isMobile ? 70 : 100}
                 fill="#8884d8"
                 dataKey="value"
                 isAnimationActive={true}
-                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                label={isMobile ? false : ({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
               >
                 {data.map((entry, index) => (
                   <Cell
