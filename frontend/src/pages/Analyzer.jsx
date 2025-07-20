@@ -1,5 +1,5 @@
 import InputBox from "../components/InputBox";
-import { useState, useRef, useCallback, useMemo, useEffect } from "react";
+
 import axios from "axios";
 
 import SentimentResult from "../components/SentimentResult";
@@ -10,33 +10,51 @@ import { analysisHistory } from "../lib/supabase";
 import { getBackendUrl } from '../utils/getBackendUrl';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import TextAnalysisPDF from '../components/TextAnalysisPDF';
-import React from "react";
+import React, { useState, useRef, useCallback, useMemo, useEffect } from "react";
 
-const instructions = [
-  "Select the analysis model (Rule-Based or Deep Learning).",
-  "Type or speak your text using the input box and mic icon.",
-  "Click 'Analyze' to process your text.",
-  "View the sentiment and emotion results below."
-];
+// ErrorBoundary for PDFDownloadLink
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+  componentDidCatch(error, errorInfo) {
+    // Optionally log error
+  }
+  render() {
+    if (this.state.hasError) {
+      return <div className="text-red-500">Something went wrong with PDF download.</div>;
+    }
+    return this.props.children;
+  }
+}
 
 const SentimentResultsSection = React.memo(function SentimentResultsSection({
   hasResults, glow, result, summary, currentText, user, PDFDownloadLink, TextAnalysisPDF, model
 }) {
+  // Defensive: Only render PDFDownloadLink if all required data is valid
+  const canDownloadPDF = hasResults && Array.isArray(result) && result.length > 0 && summary && typeof currentText === 'string' && currentText.length > 0;
   return (
     <section className="w-full mt-8 mb-10">
       {hasResults && (
         <div className={`rounded-2xl border border-white/20 shadow-xl p-8 backdrop-blur-md bg-white/5 text-white transition-all duration-700 ${glow ? 'ring-4 ring-[#FFD700] ring-opacity-60 shadow-yellow-400/40' : ''}`}>
           <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
             <h2 className="unbounded-bold text-2xl text-[#FFD700]">Sentiment Results</h2>
-            {hasResults && Array.isArray(result) && result.length > 0 && summary && (
-              <PDFDownloadLink
-                document={<TextAnalysisPDF analysis={result} summary={summary} userText={currentText} user={user} model={model === 'deep' ? 'Advanced AI' : 'Fast & Simple'} />}
-                fileName="text-analysis-result.pdf"
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#FFD700] text-[#181A1B] unbounded-bold text-base shadow hover:bg-[#5fffe0] transition"
-              >
-                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#181A1B" strokeWidth="2" className="inline-block"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"/></svg>
-                Download PDF
-              </PDFDownloadLink>
+            {canDownloadPDF && (
+              <ErrorBoundary>
+                <PDFDownloadLink
+                  key={JSON.stringify({ result, summary, currentText, model })}
+                  document={<TextAnalysisPDF analysis={result} summary={summary} userText={currentText} user={user} model={model === 'deep' ? 'Advanced AI' : 'Fast & Simple'} />}
+                  fileName="text-analysis-result.pdf"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#FFD700] text-[#181A1B] unbounded-bold text-base shadow hover:bg-[#5fffe0] transition"
+                >
+                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#181A1B" strokeWidth="2" className="inline-block"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"/></svg>
+                  Download PDF
+                </PDFDownloadLink>
+              </ErrorBoundary>
             )}
           </div>
           <SentimentResult data={result} />

@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { fetchGlobalInsights } from '../utils/fetchInsights';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { useMediaQuery } from 'react-responsive';
+import analysingPng from '../assets/analysing.png';
 
 const EMOTION_COLORS = {
   Positive: "#00FFCC",
@@ -102,7 +103,12 @@ export default function Insights() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, type: 'spring' }}
       >
-        {loading && <div className="text-white/70 text-center py-8">Loading insights...</div>}
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="w-16 h-16 mb-4 border-4 border-[#FFD700] border-t-transparent rounded-full animate-spin shadow-lg" style={{ borderRightColor: '#FFD70088', borderLeftColor: '#FFD70088' }}></div>
+            <span className="unbounded-bold text-xl text-[#FFD700] animate-pulse">Loading insights...</span>
+          </div>
+        )}
         {error && <div className="text-red-400 text-center py-8">{error}</div>}
         {insights && (
           <>
