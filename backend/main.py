@@ -59,7 +59,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "https://multi-sentiment-analyzer.vercel.app",
-        "https://multi-sentiment-analyzer-git-o-4e070a-ashishs-projects-b27772ae.vercel.app/"
+        "https://multi-sentiment-analyzer-git-o-4e070a-ashishs-projects-b27772ae.vercel.app"
     ],  # React frontend origin
     allow_credentials=True,
     allow_methods=["*"],
