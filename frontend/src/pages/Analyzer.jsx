@@ -1,5 +1,5 @@
 import InputBox from "../components/InputBox";
-import { useState, useRef, useCallback, useMemo } from "react";
+import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import axios from "axios";
 
 import SentimentResult from "../components/SentimentResult";
@@ -20,7 +20,7 @@ const instructions = [
 ];
 
 const SentimentResultsSection = React.memo(function SentimentResultsSection({
-  hasResults, glow, result, summary, currentText, user, PDFDownloadLink, TextAnalysisPDF
+  hasResults, glow, result, summary, currentText, user, PDFDownloadLink, TextAnalysisPDF, model
 }) {
   return (
     <section className="w-full mt-8 mb-10">
@@ -28,9 +28,9 @@ const SentimentResultsSection = React.memo(function SentimentResultsSection({
         <div className={`rounded-2xl border border-white/20 shadow-xl p-8 backdrop-blur-md bg-white/5 text-white transition-all duration-700 ${glow ? 'ring-4 ring-[#FFD700] ring-opacity-60 shadow-yellow-400/40' : ''}`}>
           <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
             <h2 className="unbounded-bold text-2xl text-[#FFD700]">Sentiment Results</h2>
-            {hasResults && (
+            {hasResults && Array.isArray(result) && result.length > 0 && summary && (
               <PDFDownloadLink
-                document={<TextAnalysisPDF analysis={result} summary={summary} userText={currentText} user={user} />}
+                document={<TextAnalysisPDF analysis={result} summary={summary} userText={currentText} user={user} model={model === 'deep' ? 'Advanced AI' : 'Fast & Simple'} />}
                 fileName="text-analysis-result.pdf"
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#FFD700] text-[#181A1B] unbounded-bold text-base shadow hover:bg-[#5fffe0] transition"
               >
@@ -69,12 +69,20 @@ export default function Analyzer() {
   const [currentText, setCurrentText] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
   const resultsRef = useRef(null);
+  const [analysisDone, setAnalysisDone] = useState(false); // NEW
+  const [shouldScroll, setShouldScroll] = useState(false); // NEW
 
   const BACKEND_URL = getBackendUrl();
 
   const handleAnalyze = useCallback(async (text, selectedModel) => {
     setLoading(true);
     setCurrentText(text);
+    setGlow(true);
+    setHasResults(false);
+    setResult(null);
+    setSummary(null);
+    setAnalysisDone(false); // NEW
+    setShouldScroll(false); // NEW
     try {
       const response = await axios.post(
         `${BACKEND_URL}/analyze?model=${selectedModel}`,
@@ -85,12 +93,6 @@ export default function Analyzer() {
       setHasResults(true);
       setGlow(true);
       setTimeout(() => setGlow(false), 2500);
-      setTimeout(() => {
-        if (resultsRef.current) {
-          resultsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-      }, 100);
-
       if (user) {
         try {
           await analysisHistory.saveAnalysis(user.id, {
@@ -104,13 +106,24 @@ export default function Analyzer() {
           console.error('Failed to save analysis:', error);
         }
       }
+      // Scroll after 2s, loader after 3s
+      setTimeout(() => setShouldScroll(true), 2000);
+      setTimeout(() => setAnalysisDone(true), 3000);
     } catch (error) {
       alert("Analysis failed. Please try again.");
       setHasResults(false);
+      setAnalysisDone(false);
+      setShouldScroll(false);
     } finally {
       setLoading(false);
     }
   }, [BACKEND_URL, user]);
+
+  useEffect(() => {
+    if (hasResults && shouldScroll && resultsRef.current) {
+      resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [hasResults, shouldScroll]);
 
   const handleSelectAnalysis = useCallback((analysis) => {
     setResult(analysis.results);
@@ -135,6 +148,7 @@ export default function Analyzer() {
           {/* Hero Input Section */}
           <section className="w-full">
             <InputBox model={model} setModel={setModel} onAnalyze={handleAnalyze} loading={loading} />
+            <div ref={resultsRef} />
             <SentimentResultsSection
               hasResults={hasResults}
               glow={glow}
@@ -144,6 +158,7 @@ export default function Analyzer() {
               user={user}
               PDFDownloadLink={PDFDownloadLink}
               TextAnalysisPDF={TextAnalysisPDF}
+              model={model}
             />
           </section>
 

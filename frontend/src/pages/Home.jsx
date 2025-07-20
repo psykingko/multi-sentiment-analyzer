@@ -372,27 +372,29 @@ export default function Home() {
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center w-full max-w-md mx-auto">
           <motion.div
             className="flex-1"
-            whileHover={{ 
+            whileHover={{
               scale: 1.05,
               boxShadow: "0 0 30px rgba(255, 215, 0, 0.6)",
-              borderColor: '#FFD700'
+              borderColor: '#FFD700',
+              borderRadius: '9999px',
             }}
             whileTap={{ scale: 0.98 }}
             transition={{ type: 'spring', stiffness: 300, damping: 20, duration: 0.15 }}
           >
             <Link
               to="/analyze"
-              className="w-full min-w-[300px] max-w-xs flex-1 flex items-center justify-center px-8 py-3 rounded-full unbounded-bold text-lg bg-black text-white border-2 border-[#222] hover:bg-white hover:text-black transition-all duration-300 shadow-lg border-[#FFD700] text-center"
+              className="w-full min-w-[300px] max-w-xs flex-1 flex items-center justify-center px-8 py-3 rounded-full unbounded-bold text-lg bg-black text-white border-2 border-[#222]  hover:bg-white hover:text-black transition-all duration-300 shadow-lg border-[#FFD700] text-center "
             >
               Try Text Analyzer
             </Link>
           </motion.div>
           <motion.div
             className="flex-1"
-            whileHover={{ 
+            whileHover={{
               scale: 1.05,
               boxShadow: "0 0 30px rgba(255, 215, 0, 0.6)",
-              borderColor: '#FFD700'
+              borderColor: '#FFD700',
+              borderRadius: '9999px',
             }}
             whileTap={{ scale: 0.98 }}
             transition={{ type: 'spring', stiffness: 300, damping: 20, duration: 0.15 }}

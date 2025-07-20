@@ -13,7 +13,7 @@ const RecentAnalysis = React.memo(({ onSelectAnalysis, refreshKey }) => {
   const loadRecentAnalyses = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await analysisHistory.getRecentAnalysis(user.id, 5);
+      const data = await analysisHistory.getRecentAnalysis(user.id); // fetch all analyses for the user
       setAnalyses(data);
     } catch (err) {
       setError('Failed to load recent analyses');

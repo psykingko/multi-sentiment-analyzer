@@ -11,6 +11,9 @@ import { ChevronUpDownIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { Fragment } from 'react';
 import { SENTIMENT_ICONS as TEXT_SENTIMENT_ICONS } from './SentimentResult';
 import { EMOTION_COLORS as TEXT_EMOTION_COLORS, EMOTION_ICONS as TEXT_EMOTION_ICONS } from './Summary';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import FaceScanPDF from './FaceScanPDF';
+import { useAuth } from '../contexts/AuthContext';
 
 const EMOTION_COLORS = {
   Happy: '#FFD700',
@@ -134,6 +137,7 @@ const modelOptions = [
 ];
 
 const FaceSentiment = React.memo(() => {
+  const { user } = useAuth();
   const videoRef = useRef(null);
   const [timeline, setTimeline] = useState([]); // [{time, emotion, emoji, confidence}]
   const [scanning, setScanning] = useState(false);
@@ -142,6 +146,8 @@ const FaceSentiment = React.memo(() => {
   const [cameraOn, setCameraOn] = useState(false);
   const [countdown, setCountdown] = useState(5); // NEW
   const resultsRef = useRef(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false); // NEW
+  const [shouldScroll, setShouldScroll] = useState(false); // NEW
 
   // Countdown effect
   useEffect(() => {
@@ -171,6 +177,8 @@ const FaceSentiment = React.memo(() => {
     setScanning(true);
     setCameraOn(true);
     setCountdown(5); // Reset timer
+    setIsAnalyzing(true); // NEW
+    setShouldScroll(false); // NEW
     let results = [];
     let currentLandmarks = null;
     let faceMesh = null;
@@ -211,18 +219,34 @@ const FaceSentiment = React.memo(() => {
       for (let second = 1; second <= 5; second++) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
         let emotion, confidence;
-        if (!currentLandmarks && mode === 'rule') {
-          emotion = "No Face";
-          confidence = 0;
-        } else {
-          const input = mode === 'deep' ? videoRef.current : currentLandmarks;
-          const pred = await detectFaceEmotion(mode, input);
-          if (typeof pred === "object") {
-            emotion = pred.emotion || pred;
-            confidence = pred.confidence || 0;
+        if (mode === 'deep') {
+          // Ensure video is ready before detection
+          if (videoRef.current && videoRef.current.readyState >= 2) {
+            const pred = await detectFaceEmotion(mode, videoRef.current);
+            if (typeof pred === "object") {
+              emotion = pred.emotion || pred;
+              confidence = pred.confidence || 0;
+            } else {
+              emotion = pred;
+              confidence = 0;
+            }
           } else {
-            emotion = pred;
+            emotion = "No Face";
             confidence = 0;
+          }
+        } else {
+          if (!currentLandmarks) {
+            emotion = "No Face";
+            confidence = 0;
+          } else {
+            const pred = await detectFaceEmotion(mode, currentLandmarks);
+            if (typeof pred === "object") {
+              emotion = pred.emotion || pred;
+              confidence = pred.confidence || 0;
+            } else {
+              emotion = pred;
+              confidence = 0;
+            }
           }
         }
         results.push({
@@ -233,11 +257,9 @@ const FaceSentiment = React.memo(() => {
         });
         setTimeline([...results]);
       }
-      setTimeout(() => {
-        if (resultsRef.current) {
-          resultsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-      }, 100);
+      setTimeline(results);
+      setTimeout(() => setShouldScroll(true), 2000); // Scroll after 2s
+      setTimeout(() => setIsAnalyzing(false), 3000); // Loader for 3s
 
       // Stop everything after 5 seconds
       camera.stop();
@@ -247,11 +269,19 @@ const FaceSentiment = React.memo(() => {
       setCameraOn(false);
     } catch (err) {
       setError("Could not access camera. Please check permissions.");
+      setIsAnalyzing(false);
+      setShouldScroll(false);
       stopVideo();
       setScanning(false);
       setCameraOn(false);
     }
   }, [mode, stopVideo]);
+
+  useEffect(() => {
+    if (timeline.length > 0 && shouldScroll && resultsRef.current) {
+      resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [timeline, shouldScroll]);
 
   // Helper to map Face API emotion to SentimentResult icon key
   const mapFaceEmotionToIconKey = useCallback((emotion) => {
@@ -323,17 +353,23 @@ const FaceSentiment = React.memo(() => {
             </Listbox>
           </div>
           <button
-            className="w-full max-w-xs px-4 py-2 bg-[#FFD700] text-[#181A1B] text-black rounded-full unbounded-bold shadow-lg hover:scale-105 border-2 border-[#FFD700]/80 focus:outline-none focus:ring-2 focus:ring-[#FFD700] disabled:opacity-60 flex-grow flex items-center justify-center gap-2 text-base sm:text-lg"
             onClick={handleAnalyzeFace}
-            disabled={scanning}
+            className={`mt-6 px-8 py-3 rounded-full unbounded-bold text-lg shadow-lg border-2 transition-all duration-200 ${isAnalyzing ? 'bg-[#181A1B] text-[#FFD700] border-[#FFD700] cursor-wait' : 'bg-[#FFD700] text-black border-[#FFD700]/80 hover:scale-105'}`}
+            disabled={isAnalyzing || scanning}
+            style={{ minWidth: 140, minHeight: 48 }}
           >
-            {scanning ? (
-              <>
-                Scanning... 
-                <span className="ml-2 px-2 py-0.5 rounded bg-[#181A1B] text-[#FFD700] text-lg font-mono min-w-[2.5rem] text-center animate-pulse">{countdown}</span>
-              </>
+            {isAnalyzing ? (
+              <span className="flex items-center justify-center w-full">
+                <span className="inline-block w-7 h-7 align-middle">
+                  <svg className="animate-spin" viewBox="0 0 50 50">
+                    <circle className="opacity-20" cx="25" cy="25" r="20" fill="none" stroke="#FFD700" strokeWidth="6" />
+                    <circle className="opacity-90" cx="25" cy="25" r="20" fill="none" stroke="#FFD700" strokeWidth="6" strokeDasharray="31.4 188.4" strokeLinecap="round" />
+                  </svg>
+                </span>
+                <span className="ml-2 text-base font-semibold tracking-wide">Analyzing...</span>
+              </span>
             ) : (
-              "Start Face Scan (5s)"
+              'Analyze Face'
             )}
           </button>
         </div>
@@ -352,12 +388,18 @@ const FaceSentiment = React.memo(() => {
             ) : (
               <picture>
                 <source srcSet={humanHeadWebp} type="image/webp" />
-                <img src={humanHeadPng} alt="Human Head Silhouette" loading="lazy" />
+                <img src={humanHeadPng} alt="Face Scanner" loading="lazy" className="w-32 h-32 mx-auto" style={{ objectFit: 'contain' }} />
               </picture>
             )}
           </div>
         </div>
         {error && <div className="text-red-400 mb-2 inter-regular font-semibold text-sm sm:text-base">{error}</div>}
+        {/* Show a user message if confidence is low or emotion is No Face */}
+        {timeline.length > 0 && timeline.some(entry => (entry.emotion === 'No Face' || entry.confidence < 50)) && (
+          <div className="mb-2 text-yellow-400 font-semibold text-sm sm:text-base text-center">
+            Face not clearly detected. Please ensure good lighting and face the camera directly.
+          </div>
+        )}
         {/* Tips/Steps for Using Face Scan */}
         <div className="w-full flex flex-wrap justify-center gap-2 sm:gap-4 mt-2">
           <ul className="list-disc list-inside flex flex-col sm:flex-row flex-wrap gap-x-4 gap-y-1 inter-regular text-white/80 text-sm sm:text-base text-left mx-auto max-w-2xl">
@@ -374,7 +416,19 @@ const FaceSentiment = React.memo(() => {
         <div className="w-full max-w-5xl mx-auto flex flex-col items-center" ref={resultsRef}>
           <hr className="w-full my-8 sm:my-10 border-0 h-1 bg-gradient-to-r from-transparent via-[#FFD700] to-transparent shadow-[0_0_8px_2px_#FFD70044] rounded-full" />
           <div className="w-full rounded-2xl border border-white/20 shadow-xl p-4 sm:p-8 backdrop-blur-md bg-white/5 text-white mb-6 sm:mb-10">
-            <h2 className="unbounded-bold text-2xl sm:text-3xl mb-6 sm:mb-8 text-[#FFD700]">Face Scan Results</h2>
+            <h2 className="unbounded-bold text-2xl sm:text-3xl mb-6 sm:mb-8 text-[#FFD700] flex items-center gap-4 justify-between">
+              <span>Face Scan Results</span>
+              {timeline.length > 0 && (
+                <PDFDownloadLink
+                  document={<FaceScanPDF timeline={timeline} user={user} model={mode === 'deep' ? 'Advanced AI' : 'Fast & Simple'} />}
+                  fileName="face-scan-results.pdf"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#FFD700] text-[#181A1B] unbounded-bold text-base shadow hover:bg-[#5fffe0] transition border-2 border-[#FFD700]"
+                >
+                  <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#181A1B" strokeWidth="2" className="inline-block"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"/></svg>
+                  Download Results
+                </PDFDownloadLink>
+              )}
+            </h2>
             <h3 className="unbounded-bold text-lg sm:text-2xl mb-4 sm:mb-6 text-[#ffffff]">Face Emotion Timeline (5s)</h3>
             {timeline.some(entry => entry.emotion === 'Deep model not available') && (
               <div className="mb-4 text-yellow-400 font-semibold text-sm sm:text-base text-center">Advanced AI model is not available in this environment. Please use 'Fast & Simple (Rule-Based)' or install the deep model locally.</div>
@@ -386,7 +440,8 @@ const FaceSentiment = React.memo(() => {
                   className="p-2 sm:p-3 rounded-2xl border border-white/10 bg-[#23272b] shadow text-center flex flex-col items-center min-w-0 min-h-[90px] max-w-[110px] sm:min-w-[110px] sm:max-w-[130px] mx-auto"
                 >
                   <p className="text-xs text-white/60 inter-regular mb-1">{entry.time}</p>
-                  <div className="text-base sm:text-lg mt-1 mb-1 capitalize unbounded-medium flex items-center justify-center" style={{ color: '#ffffff', wordBreak: 'break-word' }}>
+                  <div className="text-base sm:text-lg mt-1 mb-1 capitalize unbounded-medium flex items-center justify-center whitespace-nowrap" style={{ color: '#ffffff' }}>
+                    
                     {/* Use SVG icon instead of emoji */}
                     {TEXT_SENTIMENT_ICONS[mapFaceEmotionToIconKey(entry.emotion)]}
                     <span className="ml-1">{entry.emotion}</span>

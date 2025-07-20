@@ -136,7 +136,19 @@ function groupEmotions(analysis) {
   return counts;
 }
 
-export default function TextAnalysisPDF({ analysis, summary, userText, user }) {
+export default function TextAnalysisPDF({ analysis, summary, userText, user, model }) {
+  // Defensive checks
+  if (!Array.isArray(analysis) || analysis.length === 0) {
+    return (
+      <Document>
+        <Page size="A4" style={styles.page}>
+          <Text style={styles.appName}>Multi-Sentiment Analyzer</Text>
+          <Text style={styles.value}>No analysis data available for PDF export.</Text>
+          {model && <Text style={styles.value}>Model: {model}</Text>}
+        </Page>
+      </Document>
+    );
+  }
   const now = new Date();
   // Parse summary if it's a JSON string
   let parsedSummary = summary;
@@ -144,22 +156,25 @@ export default function TextAnalysisPDF({ analysis, summary, userText, user }) {
     try {
       parsedSummary = JSON.parse(summary);
     } catch {
-      parsedSummary = summary;
+      parsedSummary = {};
     }
   }
+  if (!parsedSummary || typeof parsedSummary !== 'object') parsedSummary = {};
   // Extract distribution if present
   let distribution = null;
   let overallSentiment = '';
   let confidence = '';
   if (parsedSummary && typeof parsedSummary === 'object') {
-    if (parsedSummary.mental_state_distribution) {
+    if (parsedSummary.mental_state_distribution && typeof parsedSummary.mental_state_distribution === 'object') {
       distribution = parsedSummary.mental_state_distribution;
     }
     if (parsedSummary.sentiment) {
       overallSentiment = parsedSummary.sentiment;
     }
-    if (parsedSummary.confidence) {
+    if (typeof parsedSummary.confidence === 'number' && !isNaN(parsedSummary.confidence)) {
       confidence = parsedSummary.confidence;
+    } else {
+      confidence = null;
     }
   }
   // Group emotions for summary table
@@ -169,11 +184,14 @@ export default function TextAnalysisPDF({ analysis, summary, userText, user }) {
   const topEmotions = Object.entries(emotionCounts)
     .sort((a, b) => b[1].count - a[1].count)
     .slice(0, 3)
-    .map(([emotion, { count }]) => `${getSentimentLabel(emotion)} (${((count / total) * 100).toFixed(1)}%)`)
+    .map(([emotion, { count }]) => `${getSentimentLabel(emotion)} (${total > 0 ? ((count / total) * 100).toFixed(1) : '0.0'}%)`)
     .join(', ');
 
   // Split input text into paragraphs for better page flow
   const paragraphs = userText ? userText.split(/\n+/).filter(Boolean) : [];
+
+  // Defensive: Only render distribution table if distribution is a valid object with at least one entry
+  const hasDistribution = distribution && typeof distribution === 'object' && Object.keys(distribution).length > 0;
 
   return (
     <Document>
@@ -185,6 +203,7 @@ export default function TextAnalysisPDF({ analysis, summary, userText, user }) {
         </View>
         <Text style={styles.userInfo}>User: {getUserDisplay(user)}</Text>
         <Text style={styles.value}>{now.toLocaleString()}</Text>
+        {model && <Text style={styles.value}>Model: {model}</Text>}
         {/* Input Text */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Input Text</Text>
@@ -201,12 +220,12 @@ export default function TextAnalysisPDF({ analysis, summary, userText, user }) {
           <Text style={styles.sectionTitle}>Key Insights</Text>
           <View style={styles.insights}>
             <Text><Text style={styles.insightLabel}>Overall Sentiment:</Text> <Text style={styles.insightValue}>{getSentimentLabel(overallSentiment) || 'N/A'}</Text></Text>
-            <Text><Text style={styles.insightLabel}>Confidence:</Text> <Text style={styles.insightValue}>{confidence ? (confidence * 100).toFixed(1) + '%' : 'N/A'}</Text></Text>
+            <Text><Text style={styles.insightLabel}>Confidence:</Text> <Text style={styles.insightValue}>{typeof confidence === 'number' && !isNaN(confidence) ? (confidence * 100).toFixed(1) + '%' : 'N/A'}</Text></Text>
             <Text><Text style={styles.insightLabel}>Top Emotions:</Text> <Text style={styles.insightValue}>{topEmotions || 'N/A'}</Text></Text>
           </View>
         </View>
         {/* Emotion Distribution Table */}
-        {distribution && (
+        {hasDistribution && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Emotion Distribution</Text>
             <View style={styles.summaryTable}>
@@ -218,8 +237,8 @@ export default function TextAnalysisPDF({ analysis, summary, userText, user }) {
               {Object.entries(distribution).map(([emotion, score], i) => (
                 <View key={emotion} style={styles.summaryRow}>
                   <Text style={styles.summaryCell}>{getSentimentLabel(emotion)}</Text>
-                  <Text style={styles.summaryCell}>{(score * 100).toFixed(1)}%</Text>
-                  <Text style={styles.summaryCell}>{emotionCounts[emotion.toLowerCase()] ? emotionCounts[emotion.toLowerCase()].count : 0}</Text>
+                  <Text style={styles.summaryCell}>{typeof score === 'number' && !isNaN(score) ? (score * 100).toFixed(1) + '%' : 'N/A'}</Text>
+                  <Text style={styles.summaryCell}>{emotionCounts[emotion.toLowerCase()] && typeof emotionCounts[emotion.toLowerCase()].count === 'number' ? emotionCounts[emotion.toLowerCase()].count : 0}</Text>
                 </View>
               ))}
             </View>

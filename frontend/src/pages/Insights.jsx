@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { supabase } from '../lib/supabase';
 import { fetchGlobalInsights } from '../utils/fetchInsights';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { useMediaQuery } from 'react-responsive';
 
 const EMOTION_COLORS = {
   Positive: "#00FFCC",
@@ -41,12 +42,14 @@ function useAnimatedNumber(target, duration = 1000, decimals = 0) {
 const PieCustomTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
     const d = payload[0].payload;
-    const percent = payload[0].percent ? (payload[0].percent * 100).toFixed(1) : '0.0';
+    const value = d.value;
+    const total = d.total || 1;
+    const percent = ((value / total) * 100).toFixed(1);
     return (
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl px-4 py-2 border-2 border-[#FFD700] animate-fade-in flex flex-col items-center min-w-0 max-w-xs mx-auto text-base inter-bold text-[#181A1B] dark:text-[#FFD700]"
         style={{ pointerEvents: 'none', minWidth: 'unset', maxWidth: 220, fontWeight: 700 }}>
         <span className="font-bold text-lg" style={{ color: EMOTION_COLORS[d.name] || '#FFD700' }}>{d.name}</span>
-        <span className="font-mono text-[#FFD700]">{d.value} ({percent}%)</span>
+        <span className="font-mono text-[#FFD700]">{value} ({percent}%)</span>
       </div>
     );
   }
@@ -75,8 +78,11 @@ export default function Insights() {
   }, []);
 
   // Prepare chart data
+  const totalCount = insights && insights.sentiment_distribution
+    ? Object.values(insights.sentiment_distribution).reduce((sum, v) => sum + v, 0)
+    : 0;
   const pieData = insights && insights.sentiment_distribution
-    ? Object.entries(insights.sentiment_distribution).map(([name, value]) => ({ name, value }))
+    ? Object.entries(insights.sentiment_distribution).map(([name, value]) => ({ name, value, total: totalCount }))
     : [];
 
   // Animated numbers
@@ -84,6 +90,8 @@ export default function Insights() {
   const animatedEmotions = useAnimatedNumber(insights?.total_emotions ?? 0, 1200);
   const animatedAccuracy = useAnimatedNumber(insights?.avg_confidence ? parseFloat(insights.avg_confidence) * 100 : 0, 1200, 1);
   const animatedUsers = useAnimatedNumber(insights?.sessions ?? 0, 1200);
+
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh] bg-transparent">
@@ -123,18 +131,18 @@ export default function Insights() {
               <div className="w-full max-w-2xl mx-auto mt-8 min-w-0">
                 <h3 className="unbounded-bold text-2xl mb-6 text-[#00FFD0] text-center">Sentiment Distribution</h3>
                 <div className="h-80 w-full flex items-center justify-center bg-[#181A1B] rounded-2xl shadow border border-[#2e3236]">
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height={isMobile ? 220 : 320}>
                     <PieChart>
                       <Pie
                         data={pieData}
                         cx="50%"
                         cy="50%"
-                        innerRadius={60}
-                        outerRadius={100}
+                        innerRadius={isMobile ? 50 : 80}
+                        outerRadius={isMobile ? 90 : 120}
                         fill="#8884d8"
                         dataKey="value"
                         isAnimationActive={true}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        label={isMobile ? false : ({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                       >
                         {pieData.map((entry, index) => (
                           <Cell

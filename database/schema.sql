@@ -21,6 +21,18 @@ CREATE TABLE analysis_history (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Create global_insights table for global counts
+CREATE TABLE IF NOT EXISTS global_insights (
+    id SERIAL PRIMARY KEY,
+    total_analyses INTEGER DEFAULT 0,
+    total_emotions INTEGER DEFAULT 0
+);
+
+-- Insert a singleton row if not present
+INSERT INTO global_insights (total_analyses, total_emotions)
+SELECT 0, 0
+WHERE NOT EXISTS (SELECT 1 FROM global_insights);
+
 -- Create indexes for better performance
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_analysis_history_user_id ON analysis_history(user_id);

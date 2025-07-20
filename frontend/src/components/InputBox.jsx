@@ -10,10 +10,11 @@ const modelOptions = [
   { value: "deep", label: "Advanced AI (Local Only)" },
 ];
 
-const InputBox = ({ onAnalyze, loading, model = "rule", setModel }) => {
+const InputBox = ({ onAnalyze, loading, model = "rule", setModel, scrollToResults }) => {
   const [text, setText] = useState("");
   const [listening, setListening] = useState(false);
   const [deepUnavailable, setDeepUnavailable] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false); // NEW
   const recognitionRef = useRef(null);
   const debounceRef = useRef(null);
 
@@ -66,6 +67,8 @@ const InputBox = ({ onAnalyze, loading, model = "rule", setModel }) => {
     }, 700);
     if (listening) stopListening();
     if (text.trim()) {
+      setIsAnalyzing(true);
+      const start = Date.now();
       const result = await onAnalyze(text, model);
       if (result && result.some(r => r.sentiment === "Unavailable")) {
         setDeepUnavailable(true);
@@ -73,6 +76,12 @@ const InputBox = ({ onAnalyze, loading, model = "rule", setModel }) => {
       } else {
         setDeepUnavailable(false);
       }
+      // Ensure loader is visible for at least 3 seconds
+      const elapsed = Date.now() - start;
+      setTimeout(() => {
+        setIsAnalyzing(false);
+        // Removed scrollToResults from here
+      }, Math.max(0, 3000 - elapsed));
     }
   };
 
@@ -168,11 +177,23 @@ const InputBox = ({ onAnalyze, loading, model = "rule", setModel }) => {
         <div className="flex w-full items-center gap-2">
           <button
             type="submit"
-            className="transition-all duration-200 px-8 py-2 bg-[#FFD700] text-black rounded-full unbounded-bold shadow-lg hover:scale-105 border-2 border-[#FFD700]/80 focus:outline-none focus:ring-2 focus:ring-[#FFD700] flex-grow text-center disabled:opacity-100 "
-            disabled={loading || !text.trim()}
-            style={{ minWidth: 120 }}
+            className={`transition-all duration-200 px-8 py-2 rounded-full unbounded-bold shadow-lg flex-grow text-center border-2 focus:outline-none focus:ring-2 text-lg ${isAnalyzing ? 'bg-[#181A1B] text-[#FFD700] border-[#FFD700] cursor-wait' : 'bg-[#FFD700] text-black border-[#FFD700]/80 hover:scale-105'}`}
+            disabled={loading || !text.trim() || isAnalyzing}
+            style={{ minWidth: 120, minHeight: 48 }}
           >
-            Analyze
+            {isAnalyzing ? (
+              <span className="flex items-center justify-center w-full">
+                <span className="inline-block w-7 h-7 align-middle">
+                  <svg className="animate-spin" viewBox="0 0 50 50">
+                    <circle className="opacity-20" cx="25" cy="25" r="20" fill="none" stroke="#FFD700" strokeWidth="6" />
+                    <circle className="opacity-90" cx="25" cy="25" r="20" fill="none" stroke="#FFD700" strokeWidth="6" strokeDasharray="31.4 188.4" strokeLinecap="round" />
+                  </svg>
+                </span>
+                <span className="ml-2 text-base font-semibold tracking-wide">Analyzing...</span>
+              </span>
+            ) : (
+              "Analyze"
+            )}
           </button>
           <div className="flex items-center gap-2 flex-shrink-0">
             {listening ? (

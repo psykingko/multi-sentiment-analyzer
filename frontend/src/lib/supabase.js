@@ -29,6 +29,18 @@ export const analysisHistory = {
       throw error;
     }
 
+    // Increment global insights count (call backend endpoint)
+    try {
+      const numEmotions = Array.isArray(analysisData.results) ? analysisData.results.length : 1;
+      await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/increment-insights`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ num_emotions: numEmotions })
+      });
+    } catch (e) {
+      console.warn('Could not increment global insights:', e);
+    }
+
     return data;
   },
 
@@ -66,11 +78,11 @@ export const analysisHistory = {
     return data;
   },
 
-  // Delete analysis
+  // Delete analysis (hard delete)
   async deleteAnalysis(analysisId, userId) {
     const { error } = await supabase
       .from('analysis_history')
-      .update({ is_deleted: true })
+      .delete()
       .eq('id', analysisId)
       .eq('user_id', userId);
 

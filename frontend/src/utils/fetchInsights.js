@@ -1,10 +1,8 @@
 import { supabase } from '../lib/supabase';
 
 export async function fetchGlobalInsights() {
-  const { data, error } = await supabase
-    .from('global_insights')
-    .select('*')
-    .single();
-  if (error) throw error;
-  return data;
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+  const res = await fetch(`${backendUrl}/insights`);
+  if (!res.ok) throw new Error('Failed to fetch insights');
+  return await res.json();
 }

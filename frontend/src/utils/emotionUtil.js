@@ -15,7 +15,29 @@ export const getEmoji = (emotion) => {
   return map[emotion?.toLowerCase()] || "🤖";
 };
 
-export function predictEmotion(landmarks) {
+// === CONFIGURATION ===
+const EMOTION_CONFIG = {
+  smileCurvature: -0.02,
+  smileWidth: 0.22,
+  surpriseBrowRaise: 0.025,
+  surpriseEyeOpenness: 0.055,
+  surpriseMouthHeight: 0.006,
+  surpriseBrowAngle: 1.2,
+  angerBrowAngle: 0.5,
+  angerEyeOpenness: 0.15,
+  angerBrowRaise: 0.1,
+  smoothingWindow: 5, // Number of frames for smoothing
+  debug: false,
+};
+
+// === SMOOTHING STATE ===
+let smoothingBuffer = [];
+
+export function resetSmoothing() {
+  smoothingBuffer = [];
+}
+
+export function predictEmotion(landmarks, { smoothing = false } = {}) {
   // Validate input
   if (!landmarks || landmarks.length < 468) {
     return { emotion: "no face", confidence: 0 };
@@ -120,92 +142,47 @@ export function predictEmotion(landmarks) {
     const cheekRaise = (leftCheekRaise + rightCheekRaise) / 2;
 
     // === EMOTION CLASSIFICATION ===
-
     const emotions = [];
 
     // HAPPY - smile with raised cheeks
-
-    // HAPPY - smile, raised cheeks, eye crinkles
-    if (mouthCurvature < -0.02 && mouthWidth > 0.25) {
+    if (mouthCurvature < EMOTION_CONFIG.smileCurvature && mouthWidth > EMOTION_CONFIG.smileWidth) {
       const confidence = Math.min(
         95,
         60 + Math.abs(mouthCurvature) * 1000 + mouthWidth * 200
       );
       emotions.push({ emotion: "happy", confidence });
-      console.log("✅ Detected: HAPPY with confidence", confidence.toFixed(2));
-    } else {
-      console.log("❌ Not classified as happy.");
+      if (EMOTION_CONFIG.debug) console.log("✅ Detected: HAPPY", confidence);
     }
 
     // SURPRISED - raised eyebrows, wide eyes, open mouth
-
     if (
-      browRaise > 0.025 &&
-      eyeOpenness > 0.055 &&
-      mouthHeight < 0.006 &&
-      browAngle < 1.2 // changed from 0.3 to 1.2 — allow surprised brow angles
+      browRaise > EMOTION_CONFIG.surpriseBrowRaise &&
+      eyeOpenness > EMOTION_CONFIG.surpriseEyeOpenness &&
+      mouthHeight < EMOTION_CONFIG.surpriseMouthHeight &&
+      browAngle < EMOTION_CONFIG.surpriseBrowAngle
     ) {
       const confidence = Math.min(
         85,
         55 + browRaise * 1500 + eyeOpenness * 1200
       );
       emotions.push({ emotion: "surprised", confidence });
-      console.log(
-        "✅ Detected: SURPRISED (no mouth) with confidence",
-        confidence.toFixed(2)
-      );
-    } else if (
-      browRaise > 0.02 &&
-      eyeOpenness > 0.045 &&
-      (mouthHeight > 0.004 || mouthCurvature < -0.01) &&
-      browAngle < 1.2 // again: loosened
-    ) {
-      const confidence = Math.min(
-        92,
-        60 + browRaise * 1000 + eyeOpenness * 1000 + mouthHeight * 1000
-      );
-      emotions.push({ emotion: "surprised", confidence });
-      console.log(
-        "✅ Detected: SURPRISED (with mouth) with confidence",
-        confidence.toFixed(2)
-      );
-    } else {
-      console.log("❌ Not classified as surprised.");
-      console.log(
-        `   Reasons: browRaise=${browRaise.toFixed(
-          3
-        )} (need >0.025), eyeOpenness=${eyeOpenness.toFixed(
-          3
-        )} (need >0.055), browAngle=${browAngle.toFixed(3)} (was restricted)`
-      );
+      if (EMOTION_CONFIG.debug) console.log("✅ Detected: SURPRISED", confidence);
     }
     // Additional logic: High browRaise + high browAngle → likely SURPRISE (even if failed above)
     if (browAngle > 1 && browRaise > 0.28) {
       const confidence = 88;
       emotions.push({ emotion: "surprised", confidence });
-      console.log(
-        "✅ Detected: SURPRISED (fallback - raised brows + wide angle) with confidence",
-        confidence
-      );
+      if (EMOTION_CONFIG.debug) console.log("✅ Detected: SURPRISED (fallback - raised brows + wide angle) with confidence", confidence);
     }
 
     // ANGRY - furrowed brows, narrowed eyes, pressed lips
-
-    // Adjusted thresholds
-    // Improved anger detection logic
-    // Key anger indicators:
-    // - Eyebrows pulled down and together (lower brow position, higher inner brow angle)
-    // - Eyes narrowed/squinted (reduced eye openness)
-    // - Mouth can be tight or slightly open
-    // - Overall tense facial expression
-
     if (
       // Strong brow furrowing/angling (key anger indicator)
-      browAngle > 0.5 &&
+      browAngle > EMOTION_CONFIG.angerBrowAngle &&
       // Eyes narrowed/sharp (reduced openness)
-      eyeOpenness < 0.15 &&
+      eyeOpenness < EMOTION_CONFIG.angerEyeOpenness &&
       // Eyebrows engaged (can be raised when furrowed intensely)
-      browRaise > 0.1
+      browRaise > EMOTION_CONFIG.angerBrowRaise
     ) {
       // Calculate confidence based on multiple factors
       let confidence = 40; // Base confidence
@@ -235,36 +212,10 @@ export function predictEmotion(landmarks) {
       confidence = Math.min(95, Math.max(50, confidence));
 
       emotions.push({ emotion: "angry", confidence });
-      console.log(
-        `✅ Detected: ANGRY with confidence ${confidence.toFixed(2)}`
-      );
-      console.log(
-        `   - browAngle: ${browAngle.toFixed(
-          3
-        )}, browRaise: ${browRaise.toFixed(3)}`
-      );
-      console.log(
-        `   - eyeOpenness: ${eyeOpenness.toFixed(
-          3
-        )}, mouthHeight: ${mouthHeight.toFixed(3)}`
-      );
-    } else {
-      console.log("❌ Not classified as angry.");
-      console.log(
-        `   Debug values - browAngle: ${browAngle.toFixed(
-          3
-        )}, browRaise: ${browRaise.toFixed(
-          3
-        )}, eyeOpenness: ${eyeOpenness.toFixed(3)}`
-      );
+      if (EMOTION_CONFIG.debug) console.log(`✅ Detected: ANGRY with confidence ${confidence.toFixed(2)}`);
     }
 
     // SAD - drooping mouth, droopy eyes, lowered brows
-    console.log("=== sad Detection Debug ===");
-    console.log("Mouth Curvature:", mouthCurvature.toFixed(5));
-    console.log("Eye Openness:", eyeOpenness.toFixed(5));
-    console.log("Cheek Raise (optional):", cheekRaise.toFixed(5)); // no longer required
-
     if (
       mouthCurvature > 0.01 && // your logs: 0.02–0.03 ✅
       eyeOpenness >= 0.065 &&
@@ -272,9 +223,7 @@ export function predictEmotion(landmarks) {
     ) {
       const confidence = Math.min(84, 55 + mouthCurvature * 4000);
       emotions.push({ emotion: "sad", confidence });
-      console.log("✅ Detected: SAD with confidence", confidence.toFixed(2));
-    } else {
-      console.log("❌ Not classified as sad.");
+      if (EMOTION_CONFIG.debug) console.log("✅ Detected: SAD with confidence", confidence.toFixed(2));
     }
 
     // FEARFUL - raised eyebrows, wide eyes, tense mouth
@@ -313,46 +262,36 @@ export function predictEmotion(landmarks) {
 
     // NEUTRAL - balanced features
     if (emotions.length === 0 || emotions.every((e) => e.confidence < 40)) {
-      console.log("😐 No strong emotion detected. Defaulting to NEUTRAL.");
-      console.log("Emotions captured (if any):", emotions);
+      if (EMOTION_CONFIG.debug) console.log("😐 No strong emotion detected. Defaulting to NEUTRAL.");
       emotions.push({ emotion: "neutral", confidence: 75 });
     }
 
-    // Return highest confidence emotion
-    // Return emotion using priority if multiple are detected
+    // === PICK MOST CONFIDENT EMOTION ===
+    let result = { emotion: "neutral", confidence: 0 };
     if (emotions.length > 0) {
-      const priority = [
-        "sad",
-        "happy",
-        "angry",
-        "surprised",
-        "fearful",
-        "disgusted",
-        "contempt",
-        "neutral",
-      ];
-
-      // Filter emotions with confidence ≥ 60
-      const filtered = emotions.filter((e) => e.confidence >= 60);
-
-      if (filtered.length > 0) {
-        const sorted = filtered.sort((a, b) => {
-          const priorityA = priority.indexOf(a.emotion);
-          const priorityB = priority.indexOf(b.emotion);
-          return priorityA - priorityB || b.confidence - a.confidence;
-        });
-
-        return sorted[0];
-      }
-
-      // Fallback to max confidence if none above threshold
-      const top = emotions.reduce((prev, curr) =>
-        curr.confidence > prev.confidence ? curr : prev
-      );
-      return top;
-    } else {
-      return { emotion: "neutral", confidence: 75 };
+      result = emotions.reduce((a, b) => (a.confidence > b.confidence ? a : b));
     }
+
+    // === OPTIONAL SMOOTHING ===
+    if (smoothing) {
+      smoothingBuffer.push(result);
+      if (smoothingBuffer.length > EMOTION_CONFIG.smoothingWindow) {
+        smoothingBuffer.shift();
+      }
+      // Return the mode of the buffer (most frequent emotion)
+      const counts = {};
+      for (const r of smoothingBuffer) {
+        counts[r.emotion] = (counts[r.emotion] || 0) + 1;
+      }
+      const modeEmotion = Object.entries(counts).reduce((a, b) => (a[1] > b[1] ? a : b))[0];
+      // Average confidence for the mode
+      const avgConfidence =
+        smoothingBuffer.filter(r => r.emotion === modeEmotion).reduce((sum, r) => sum + r.confidence, 0) /
+        smoothingBuffer.filter(r => r.emotion === modeEmotion).length;
+      result = { emotion: modeEmotion, confidence: avgConfidence };
+    }
+
+    return result;
   } catch (error) {
     console.error("Error in emotion prediction:", error);
     return { emotion: "unknown", confidence: 0 };
@@ -439,7 +378,9 @@ async function detectWithDeepModel(input) {
   await loadFaceApiModels();
   // input should be a video or canvas element
   if (!input) return { emotion: 'No Face', confidence: 0 };
-  const detections = await faceapi.detectSingleFace(input, new faceapi.TinyFaceDetectorOptions()).withFaceExpressions();
+  // Lower the detection threshold for better sensitivity
+  const options = new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.1 });
+  const detections = await faceapi.detectSingleFace(input, options).withFaceExpressions();
   if (!detections || !detections.expressions) {
     return { emotion: 'No Face', confidence: 0 };
   }
