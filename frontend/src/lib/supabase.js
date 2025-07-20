@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { getBackendUrl } from '../utils/getBackendUrl';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -32,7 +33,7 @@ export const analysisHistory = {
     // Increment global insights count (call backend endpoint)
     try {
       const numEmotions = Array.isArray(analysisData.results) ? analysisData.results.length : 1;
-      await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/increment-insights`, {
+      await fetch(`${getBackendUrl()}/increment-insights`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ num_emotions: numEmotions })
