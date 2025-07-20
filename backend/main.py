@@ -31,6 +31,9 @@ import asyncpg
 import asyncio
 from fastapi import APIRouter
 
+# Create a global connection pool
+pool = None
+
 def ensure_nltk_textblob_corpora():
     # Download punkt for NLTK
     try:
@@ -69,6 +72,15 @@ app.add_middleware(
 # Add GZip compression for all responses
 app.add_middleware(GZipMiddleware, minimum_size=500)
 
+@app.on_event("startup")
+async def startup():
+    global pool
+    pool = await asyncpg.create_pool(DATABASE_URL, min_size=1, max_size=5)
+
+@app.on_event("shutdown")
+async def shutdown():
+    await pool.close()
+
 @app.get("/")
 def root():
     return {"message": "Multi-Sentiment Analyzer API. See /health or /analyze."}
@@ -92,15 +104,12 @@ else:
 
 async def increment_global_insights(num_emotions: int):
     try:
-        conn = await asyncpg.connect(DATABASE_URL)
-        try:
+        async with pool.acquire() as conn:
             await conn.execute("""
                 UPDATE global_insights
                 SET total_analyses = total_analyses + 1,
                     total_emotions = total_emotions + $1
             """, num_emotions)
-        finally:
-            await conn.close()
     except Exception as e:
         print(f"[ERROR] Could not connect to database: {e}")
         raise
@@ -230,8 +239,7 @@ async def increment_insights(num_emotions: int = Body(..., embed=True)):
 
 @app.get("/insights")
 async def get_insights():
-    conn = await asyncpg.connect(DATABASE_URL)
-    try:
+    async with pool.acquire() as conn:
         # Get global counts
         row = await conn.fetchrow("SELECT total_analyses, total_emotions FROM global_insights LIMIT 1")
         total_analyses = row["total_analyses"] if row else 0
@@ -256,5 +264,3 @@ async def get_insights():
             "sessions": sessions,
             "sentiment_distribution": sentiment_distribution
         }
-    finally:
-        await conn.close()
