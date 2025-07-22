@@ -260,6 +260,9 @@ def soulsync_chat(request: SoulSyncChatRequest):
     import uuid
     session_id = request.session_id or str(uuid.uuid4())
     if session_id not in soulsync_sessions:
+        MAX_SESSIONS = 3  # or even 2-3 for free tier
+        if len(soulsync_sessions) >= MAX_SESSIONS:
+            soulsync_sessions.pop(next(iter(soulsync_sessions)))
         soulsync_sessions[session_id] = SoulSyncAgent()
     agent = soulsync_sessions[session_id]
     # For first message, optionally call start_session (not implemented here)
