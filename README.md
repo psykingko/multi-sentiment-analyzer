@@ -152,10 +152,41 @@ Pull requests and issues are welcome! Please open an issue for bugs, feature req
 ---
 
 ## 📄 License
-MIT (or your license here)
+
+This project is licensed under the MIT License.
+
+```
+MIT License
+
+Copyright (c) 2024 Ashish Singh
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
 
 ---
 
 ## 🙏 Acknowledgements
 - HuggingFace, Google Gemini, MediaPipe, face-api.js, Supabase, and all open-source contributors.
 - **EmoBuddy**: The AI therapeutic companion system (integrated as SoulSync) for evidence-based, supportive conversation. 
+
+## 🌐 Live Demo
+
+Try it now: [https://multi-sentiment-analyzer.vercel.app/](https://multi-sentiment-analyzer.vercel.app/)
+
+--- 
