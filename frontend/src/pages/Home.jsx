@@ -3,60 +3,56 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { useState, useEffect } from "react";
 import React from "react"; // Added for React.cloneElement
 import OldBackground from '../components/OldBackground';
-import { FileText, Smile, ShieldCheck, Users } from "lucide-react";
+import { FileText, Smile, Mic, Cpu, Download, Shield, User, Users2, BarChart2, LayoutDashboard } from 'lucide-react';
 import { fetchGlobalInsights } from '../utils/fetchInsights';
 import faceScannerImg from '../assets/face-scanner.png';
 import faceScannerWebp from '../assets/face-scanner.webp';
 
 const features = [
   {
-    title: "Text & Paragraph Analysis",
-    desc: "Analyze sentiment and emotion at sentence and paragraph level with advanced AI.",
-    icon: (
-      <svg width="32" height="32" fill="none" stroke="#00FFCC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-align-left mb-2"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
-    ),
+    title: "Text & Paragraph Insights",
+    desc: "Instantly detect sentiment and emotion in any text, from single sentences to full paragraphs.",
+    icon: <FileText size={24} strokeWidth={1.5} className="mb-2" color="#00FFD0" />,
   },
   {
-    title: "Face Analysis",
-    desc: "Analyze facial expressions in real-time for emotion and sentiment.",
-    icon: (
-      <picture>
-        <source srcSet={faceScannerWebp} type="image/webp" />
-        <img src={faceScannerImg} alt="Face Analysis" className="w-8 h-8 mb-2" loading="lazy" />
-      </picture>
-    ),
+    title: "Real-Time Face Emotion",
+    desc: "Instantly read emotions from your facial expressions using your webcam.",
+    icon: <Smile size={24} strokeWidth={1.5} className="mb-2" color="#00B2FF" />,
   },
   {
-    title: "Voice & Webcam Input",
-    desc: "Real-time voice transcription and facial emotion detection using your webcam.",
-    icon: (
-      <svg width="32" height="32" fill="none" stroke="#FFD700" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-mic mb-2"><circle cx="12" cy="11" r="4"/><path d="M19 11v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-    ),
+    title: "Voice & Video Input",
+    desc: "Speak or show your emotions-analyze both voice and facial cues live.",
+    icon: <Mic size={24} strokeWidth={1.5} className="mb-2" color="#A259FF" />,
   },
   {
-    title: "Deep Learning & Rule-Based",
-    desc: "Switch between fast rule-based and powerful deep learning models (BERT, RoBERTa).",
-    icon: (
-      <svg width="32" height="32" fill="none" stroke="#FF6B6B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-cpu mb-2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="15" x2="23" y2="15"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="15" x2="4" y2="15"/></svg>
-    ),
+    title: "Flexible AI Models",
+    desc: "Choose between lightning-fast rule-based or advanced deep learning for your analysis.",
+    icon: <Cpu size={24} strokeWidth={1.5} className="mb-2" color="#FF3B3B" />,
   },
   {
-    title: "Download Sentiment Report",
-    desc: "Export your analysis as a beautiful PDF report with charts and details.",
-    icon: (
-      <svg width="32" height="32" fill="none" stroke="#00FFD0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-download mb-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-    ),
+    title: "Exportable Reports",
+    desc: "Download detailed PDF reports of your sentiment and emotion analysis.",
+    icon: <Download size={24} strokeWidth={1.5} className="mb-2" color="#00FF85" />,
   },
   {
-    title: "Secured Data",
-    desc: "Your data is encrypted and privacy is our top priority.",
-    icon: (
-      <svg width="32" height="32" fill="none" stroke="#FFD700" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-lock mb-2" viewBox="0 0 32 32">
-        <rect x="8" y="14" width="16" height="10" rx="2" />
-        <path d="M12 14V10a4 4 0 0 1 8 0v4" />
-        <circle cx="16" cy="20" r="1.5" />
-      </svg>
-    ),
+    title: "Data Privacy & Security",
+    desc: "All your data is encrypted-privacy and security are always protected.",
+    icon: <Shield size={24} strokeWidth={1.5} className="mb-2" color="#FFD700" />,
+  },
+  {
+    title: "SoulSync AI Support",
+    desc: "Chat with SoulSync, your AI companion for supportive, mindful conversation.",
+    icon: <User size={24} strokeWidth={1.5} className="mb-2" color="#FFB300" />,
+  },
+  {
+    title: "In-Depth Analytics",
+    desc: "Get comprehensive breakdowns and trends for every analysis.",
+    icon: <BarChart2 size={24} strokeWidth={1.5} className="mb-2" color="#4ADE80" />,
+  },
+  {
+    title: "Simple & Intuitive Design",
+    desc: "Experience a clean, easy-to-use interface-no tech skills required.",
+    icon: <LayoutDashboard size={24} strokeWidth={1.5} className="mb-2" color="#FF3B3B" />,
   },
 ];
 
@@ -132,8 +128,8 @@ const animatedStats = [
 const statIcons = [
   <FileText size={32} aria-label="Texts Analyzed" key="texts" />, // 15420+
   <Smile size={32} aria-label="Emotions Detected" key="emotions" />, // 8920+
-  <ShieldCheck size={32} aria-label="Accuracy Rate" key="accuracy" />, // 98%
-  <Users size={32} aria-label="Active Users" key="users" />, // 1247+
+  <Shield size={32} aria-label="Accuracy Rate" key="accuracy" />, // 98%
+  <Users2 size={32} aria-label="Active Users" key="users" />, // 1247+
 ];
 
 const faqData = [
@@ -345,8 +341,8 @@ export default function Home() {
   const statIcons = [
     <FileText size={32} aria-label="Texts Analyzed" key="texts" />, // 15420+
     <Smile size={32} aria-label="Emotions Detected" key="emotions" />, // 8920+
-    <ShieldCheck size={32} aria-label="Accuracy Rate" key="accuracy" />, // 98%
-    <Users size={32} aria-label="Active Users" key="users" />, // 1247+
+    <Shield size={32} aria-label="Accuracy Rate" key="accuracy" />, // 98%
+    <Users2 size={32} aria-label="Active Users" key="users" />, // 1247+
   ];
 
   return (
@@ -403,7 +399,7 @@ export default function Home() {
               to="/face-scan"
               className="w-full min-w-[300px] max-w-xs flex-1 flex items-center justify-center px-8 py-3 rounded-full unbounded-bold text-lg bg-black text-white border-2 border-[#222] hover:bg-white hover:text-black transition-all duration-300 shadow-lg border-[#FFD700] text-center"
             >
-              Discover Face Scan
+              Try Face Analyzer
             </Link>
           </motion.div>
         </div>
@@ -422,16 +418,13 @@ export default function Home() {
           {features.map((f, i) => (
             <motion.div
               key={f.title}
-              className="rounded-2xl border border-white/20 shadow-xl p-6 flex flex-col items-center text-center backdrop-blur-md bg-white/5 cursor-pointer border border-white/20"
+              className="rounded-2xl border border-white/20 shadow-xl p-6 flex flex-col items-center text-center backdrop-blur-md bg-white/5 cursor-pointer border border-white/20 w-full max-w-xs mx-auto md:max-w-none flex-1 min-h-[240px] md:min-h-[300px] h-full justify-between"
               whileHover={{ scale: 1.01, borderColor: '#FFD700' }}
-             
               transition={{ type: 'spring', stiffness: 300, damping: 20, duration: 0.6 }}
             >
-              <div className="mb-4">
-                {f.icon}
-              </div>
+              <div className="mb-4 flex items-center justify-center w-12 h-12">{React.cloneElement(f.icon, { width: 48, height: 48, className: 'mb-2 w-12 h-12' })}</div>
               <h3 className="unbounded-bold text-xl mb-2 text-white">{f.title}</h3>
-              <p className="inter-regular text-base text-white/80">{f.desc}</p>
+              <p className="inter-regular text-base text-white/80 flex-1 flex items-center justify-center">{f.desc}</p>
             </motion.div>
           ))}
         </div>
@@ -600,6 +593,9 @@ export default function Home() {
               <li>AI models may misinterpret sarcasm, slang, or complex emotions.</li>
               <li>Facial and voice analysis is for demonstration only and not for medical or diagnostic use.</li>
               <li>No personal data is stored, but use caution with sensitive information.</li>
+              <li><span className="text-[#FFD700] font-bold">SoulSync AI Therapist:</span> SoulSync is available with limited daily usage due to API restrictions.</li>
+              <li>SoulSync is an AI companion, not a licensed therapist. For urgent mental health needs, please seek help from a qualified professional.</li>
+              <li>SoulSync is experimental and may not always provide accurate or appropriate responses. Please avoid sharing sensitive personal information.</li>
               <li>For feedback or issues, please contact us or open a GitHub issue.</li>
             </ul>
           </div>

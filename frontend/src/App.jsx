@@ -9,6 +9,7 @@ const Home = lazy(() => import("./pages/Home"));
 const Analyzer = lazy(() => import("./pages/Analyzer"));
 const FaceScanner = lazy(() => import("./pages/FaceScanner"));
 const Insights = lazy(() => import("./pages/Insights"));
+const SoulSync = lazy(() => import("./pages/SoulSync")); // New AI Therapist page
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
             <Route path="analyze" element={<Analyzer />} />
             <Route path="face-scan" element={<FaceScanner />} />
             <Route path="insights" element={<Insights />} />
+            <Route path="soulsync" element={<SoulSync />} /> {/* New AI Therapist route */}
           </Route>
         </Routes>
       </Suspense>

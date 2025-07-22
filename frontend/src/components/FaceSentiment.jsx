@@ -405,7 +405,7 @@ const FaceSentiment = React.memo(() => {
           <ul className="list-disc list-inside flex flex-col sm:flex-row flex-wrap gap-x-4 gap-y-1 inter-regular text-white/80 text-sm sm:text-base text-left mx-auto max-w-2xl">
             <li>Ensure your face is well-lit and visible to the camera.</li>
             <li>Choose the analysis model above.</li>
-            <li>Click <span className="text-[#FFD700] font-bold">Start Face Scan</span> and look at the camera.</li>
+            <li>Click <span className="text-[#FFD700] font-bold">Analyze Face</span> and look at the camera.</li>
             <li>Hold still for 5 seconds while your emotions are analyzed.</li>
             <li>Review your emotion timeline and summary below.</li>
           </ul>
@@ -417,7 +417,7 @@ const FaceSentiment = React.memo(() => {
           <hr className="w-full my-8 sm:my-10 border-0 h-1 bg-gradient-to-r from-transparent via-[#FFD700] to-transparent shadow-[0_0_8px_2px_#FFD70044] rounded-full" />
           <div className="w-full rounded-2xl border border-white/20 shadow-xl p-4 sm:p-8 backdrop-blur-md bg-white/5 text-white mb-6 sm:mb-10">
             <h2 className="unbounded-bold text-2xl sm:text-3xl mb-6 sm:mb-8 text-[#FFD700] flex items-center gap-4 justify-between">
-              <span>Face Scan Results</span>
+              <span>Face Analyser Results</span>
               {timeline.length > 0 && (
                 <PDFDownloadLink
                   document={<FaceScanPDF timeline={timeline} user={user} model={mode === 'deep' ? 'Advanced AI' : 'Fast & Simple'} />}
@@ -464,11 +464,11 @@ const FaceSentiment = React.memo(() => {
       {/* How to Use Section */}
       <hr className="w-full my-8 sm:my-10 border-0 h-1 bg-gradient-to-r from-transparent via-[#FFD700] to-transparent shadow-[0_0_8px_2px_#FFD70044] rounded-full" />
       <div className="w-full rounded-2xl border border-white/20 shadow-xl p-4 sm:p-8 min-h-[120px] sm:min-h-[180px] flex flex-col justify-center items-center backdrop-blur-md bg-white/5 text-white mt-6 sm:mt-8 mb-6 sm:mb-10">
-        <h2 className="unbounded-bold text-xl sm:text-2xl mb-3 sm:mb-4 text-[#FFD700] text-center tracking-wider">How to Use Face Scan</h2>
+        <h2 className="unbounded-bold text-xl sm:text-2xl mb-3 sm:mb-4 text-[#FFD700] text-center tracking-wider">How to Use Face Analyser</h2>
         <ol className="list-decimal list-inside space-y-1 sm:space-y-2 inter-regular text-white/90 text-sm sm:text-base md:text-lg w-full text-center mx-auto max-w-xs sm:max-w-lg">
           <li>Allow camera access when prompted.</li>
           <li>Position your face in the center of the frame.</li>
-          <li>Choose the model and click Start Face Scan.</li>
+          <li>Choose the model and click Analyze Face.</li>
           <li>Hold still and look at the camera for 5 seconds.</li>
           <li>Review your results and insights below.</li>
         </ol>

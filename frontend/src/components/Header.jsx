@@ -11,7 +11,8 @@ import analysingWebp from '../assets/analysing.webp';
 const navItems = [
   { to: '/', label: 'Home' },
   { to: '/analyze', label: 'Text Analyzer' },
-  { to: '/face-scan', label: 'Face Scan' },
+  { to: '/face-scan', label: 'Face Analyser' },
+  { to: '/soulsync', label: 'SoulSync' }, // New AI Therapist
   { to: '/insights', label: 'Insights' },
 ];
 

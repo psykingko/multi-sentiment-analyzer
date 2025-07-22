@@ -30,6 +30,22 @@ import textblob.download_corpora
 import asyncpg
 import asyncio
 from fastapi import APIRouter
+from app.soulsync import SoulSyncAgent
+from fastapi import Request
+from pydantic import BaseModel
+from typing import Optional
+
+# In-memory session store for demo (replace with persistent store for production)
+soulsync_sessions = {}
+
+class SoulSyncChatRequest(BaseModel):
+    session_id: Optional[str] = None
+    message: str
+
+class SoulSyncChatResponse(BaseModel):
+    response: str
+    session_id: str
+    should_continue: bool
 
 # Create a global connection pool
 pool = None
@@ -236,6 +252,19 @@ async def increment_insights(num_emotions: int = Body(..., embed=True)):
     except Exception as e:
         print(f"[ERROR] increment_global_insights failed: {e}")
         return {"status": "error", "detail": str(e)}
+
+@app.post("/soulsync/chat", response_model=SoulSyncChatResponse)
+def soulsync_chat(request: SoulSyncChatRequest):
+    print("Received:", request)
+    # Use session_id if provided, else create new
+    import uuid
+    session_id = request.session_id or str(uuid.uuid4())
+    if session_id not in soulsync_sessions:
+        soulsync_sessions[session_id] = SoulSyncAgent()
+    agent = soulsync_sessions[session_id]
+    # For first message, optionally call start_session (not implemented here)
+    response, should_continue = agent.continue_conversation(request.message)
+    return SoulSyncChatResponse(response=response, session_id=session_id, should_continue=should_continue)
 
 @app.get("/insights")
 async def get_insights():

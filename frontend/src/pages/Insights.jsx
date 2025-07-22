@@ -3,8 +3,7 @@ import { motion } from "framer-motion";
 import { supabase } from '../lib/supabase';
 import { fetchGlobalInsights } from '../utils/fetchInsights';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { useMediaQuery } from 'react-responsive';
-import analysingPng from '../assets/analysing.png';
+
 
 const EMOTION_COLORS = {
   Positive: "#00FFCC",
