@@ -1,6 +1,13 @@
 # main.py
-
 import os
+from dotenv import load_dotenv
+load_dotenv()
+import ssl
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+env_mode = os.getenv("ENV", "local").lower()
+print(f"🌍 Running in {env_mode.upper()} mode")
+
 from fastapi import FastAPI, Query, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -20,8 +27,7 @@ from app.services.sentiment_rule import (
     is_english
 )
 from app.services.ml_model import analyze_sentiment_bert
-from dotenv import load_dotenv
-load_dotenv()
+
 import os
 print("ENABLE_DEEP_LEARNING:", os.environ.get("ENABLE_DEEP_LEARNING"))
 from collections import Counter
@@ -88,14 +94,49 @@ app.add_middleware(
 # Add GZip compression for all responses
 app.add_middleware(GZipMiddleware, minimum_size=500)
 
+
+
 @app.on_event("startup")
 async def startup():
     global pool
-    pool = await asyncpg.create_pool(DATABASE_URL, min_size=1, max_size=5)
+
+    if not DATABASE_URL:
+        print("❌ [DATABASE] DATABASE_URL is not set. Skipping DB pool creation.")
+        pool = None
+        return
+
+    try:
+        if env_mode == "production":
+            ssl_context = ssl.create_default_context()
+            print("🔒 Using verified SSL context (Render/Production)")
+        else:
+            ssl_context = ssl._create_unverified_context()
+            print("⚠️ Using unverified SSL context (Local mode)")
+
+        pool = await asyncpg.create_pool(
+            dsn=DATABASE_URL,
+            min_size=1,
+            max_size=5,
+            command_timeout=60,
+            ssl=ssl_context
+        )
+        print("✅ Connected to Supabase database successfully!")
+    except Exception as e:
+        print(f"❌ [DATABASE CONNECTION ERROR] {e}")
+        pool = None
+
 
 @app.on_event("shutdown")
 async def shutdown():
-    await pool.close()
+    global pool
+    if pool:
+        try:
+            await pool.close()
+            print("🧹 Connection pool closed cleanly.")
+        except Exception as e:
+            print(f"[WARN] Error closing pool: {e}")
+
+
 
 @app.get("/")
 def root():
@@ -109,7 +150,7 @@ def health_check():
 def version():
     return {"version": "1.0.0", "model": "VADER + TextBlob"}
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+
 
 # Log the database URL (partially, for debugging)
 db_url = os.getenv("DATABASE_URL")
@@ -296,3 +337,13 @@ async def get_insights():
             "sessions": sessions,
             "sentiment_distribution": sentiment_distribution
         }
+
+if __name__ == "__main__":
+    import asyncio
+    import uvicorn
+
+    # Run DB connection check before starting
+    asyncio.run(startup())
+
+    # Launch FastAPI server
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=(env_mode != "production"))
