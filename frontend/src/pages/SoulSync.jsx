@@ -145,20 +145,27 @@ export default function SoulSync() {
             {loading ? "..." : "Send"}
           </button>
         </form>
-        {/* Warning/Notice Section (moved to bottom, reworded) */}
+        {/* Chat Disabled Notice */}
         <div className="w-full max-w-3xl mx-auto mt-10 mb-2">
-          <div className="rounded-2xl border-2 border-[#FF3B3B] bg-[#181A1B]/90 shadow-xl p-5 flex flex-col items-center text-center backdrop-blur-md">
-            <span className="unbounded-bold text-base md:text-lg text-[#FFD700] mb-2">Important Notice</span>
-            <ul className="inter-regular text-sm md:text-base text-white/90 mb-2 list-disc list-inside text-left">
-              <li><span className="text-[#FFD700] font-bold">Limited Use:</span> SoulSync is currently available with limited daily usage to ensure fair access for all users. This is due to API usage restrictions on our current plan. If you experience slow responses or temporary unavailability, please try again later.</li>
-              <li><span className="text-[#FFD700] font-bold">Not a Human Therapist:</span> SoulSync is an AI companion, not a licensed therapist or counselor. For urgent mental health needs, please seek help from a qualified professional or helpline.</li>
-              <li><span className="text-[#FFD700] font-bold">Privacy:</span> While your messages are not stored long-term, please avoid sharing sensitive personal information.</li>
-              <li><span className="text-[#FFD700] font-bold">Experimental:</span> This feature is experimental and may not always provide accurate or appropriate responses.</li>
-              <li><span className="text-[#FFD700] font-bold">Thank You:</span> Thank you for your understanding and support as we continue to improve SoulSync!</li>
-            </ul>
+          <div className="flex items-start gap-2 sm:gap-4 rounded-2xl border-2 border-[#FF3B3B] bg-[#181A1B]/80 shadow-xl p-3 sm:p-6 backdrop-blur-md">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="flex-shrink-0 mt-1 sm:w-7 sm:h-7">
+              <circle cx="12" cy="12" r="11" stroke="#FFD700" strokeWidth="2" fill="#181A1B"/>
+              <path d="M12 7v5" stroke="#FFD700" strokeWidth="2" strokeLinecap="round"/>
+              <circle cx="12" cy="16" r="1.2" fill="#FFD700"/>
+            </svg>
+            <div>
+              <div className="unbounded-bold text-[#FFD700] text-base sm:text-lg mb-1">SoulSync Chat Temporarily Unavailable</div>
+              <ul className="list-disc list-inside text-white/80 inter-regular text-xs sm:text-sm space-y-2 pl-2">
+                <li><span className="text-[#FFD700] font-bold">Billing Required:</span> Both Google AI Studio and Vertex AI require billing to be enabled for Gemini model access.</li>
+                <li><span className="text-[#FFD700] font-bold">Academic Project:</span> As this is an academic project for resume purposes, we cannot afford paid API access at this time.</li>
+                <li><span className="text-[#FFD700] font-bold">Core Features Available:</span> All sentiment analysis features (text, face, voice) remain fully functional and free to use.</li>
+                <li><span className="text-[#FFD700] font-bold">Future Plans:</span> We're exploring alternative free AI providers to restore this feature.</li>
+                <li>Thank you for your understanding and support!</li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
-} 
+}

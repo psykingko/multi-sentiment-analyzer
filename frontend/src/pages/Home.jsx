@@ -404,6 +404,24 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
+      
+      {/* Backend Cold Start Notice */}
+      <section className="w-full max-w-4xl mx-auto mb-10 px-2 sm:px-4">
+        <div className="flex items-start gap-2 sm:gap-4 rounded-2xl border-2 border-[#FFD700] bg-[#181A1B]/80 shadow-xl p-3 sm:p-6 backdrop-blur-md">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="flex-shrink-0 mt-1 sm:w-7 sm:h-7">
+            <circle cx="12" cy="12" r="11" stroke="#FFD700" strokeWidth="2" fill="#181A1B"/>
+            <path d="M12 7v5" stroke="#FFD700" strokeWidth="2" strokeLinecap="round"/>
+            <circle cx="12" cy="16" r="1.2" fill="#FFD700"/>
+          </svg>
+          <div>
+            <div className="unbounded-bold text-[#FFD700] text-base sm:text-lg mb-1">Backend Connection Notice</div>
+            <p className="text-white/80 inter-regular text-xs sm:text-sm">
+              Our backend is hosted on Render's free tier and may take <span className="text-[#FFD700] font-bold">5-6 minutes</span> to wake up after inactivity. If you experience slow initial loading, please wait a moment and try again. Thank you for your patience!
+            </p>
+          </div>
+        </div>
+      </section>
+      
       {/* 1. Why Choose Multi-Sentiment Analyzer? (feature cards) */}
       <section className="w-full max-w-4xl mx-auto mb-16 px-4">
         <div
