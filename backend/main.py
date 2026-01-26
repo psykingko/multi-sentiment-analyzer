@@ -352,5 +352,8 @@ if __name__ == "__main__":
     # Run DB connection check before starting
     asyncio.run(startup())
 
+    # Get port from environment variable (Render sets this)
+    port = int(os.environ.get("PORT", 8000))
+    
     # Launch FastAPI server
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=(env_mode != "production"))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=(env_mode != "production"))
