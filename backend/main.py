@@ -115,8 +115,9 @@ async def startup():
 
     try:
         if env_mode == "production":
-            ssl_context = ssl.create_default_context()
-            print("🔒 Using verified SSL context (Render/Production)")
+            # For Render/Production, disable SSL verification for Supabase
+            ssl_context = ssl._create_unverified_context()
+            print("🔒 Using unverified SSL context for Supabase compatibility")
         else:
             ssl_context = ssl._create_unverified_context()
             print("⚠️ Using unverified SSL context (Local mode)")
@@ -327,30 +328,51 @@ def soulsync_chat(request: SoulSyncChatRequest):
 
 @app.get("/insights")
 async def get_insights():
-    async with pool.acquire() as conn:
-        # Get global counts
-        row = await conn.fetchrow("SELECT total_analyses, total_emotions FROM global_insights LIMIT 1")
-        total_analyses = row["total_analyses"] if row else 0
-        total_emotions = row["total_emotions"] if row else 0
-
-        # Calculate average confidence (all-time)
-        avg_conf_row = await conn.fetchrow("SELECT AVG((summary->>'confidence')::float) AS avg_confidence FROM analysis_history WHERE summary->>'confidence' IS NOT NULL")
-        avg_confidence = avg_conf_row["avg_confidence"] if avg_conf_row else None
-
-        # Count all-time unique users
-        sessions_row = await conn.fetchrow("SELECT COUNT(DISTINCT user_id) AS sessions FROM analysis_history")
-        sessions = sessions_row["sessions"] if sessions_row else 0
-
-        # Sentiment distribution (all-time, by paragraph_sentiment)
-        sentiment_rows = await conn.fetch("SELECT summary->>'sentiment' AS sentiment, COUNT(*) AS count FROM analysis_history WHERE summary->>'sentiment' IS NOT NULL GROUP BY sentiment")
-        sentiment_distribution = {row["sentiment"]: row["count"] for row in sentiment_rows}
-
+    if pool is None:
         return {
-            "total_analyses": total_analyses,
-            "total_emotions": total_emotions,
-            "avg_confidence": avg_confidence,
-            "sessions": sessions,
-            "sentiment_distribution": sentiment_distribution
+            "error": "Database connection not available",
+            "total_analyses": 0,
+            "total_emotions": 0,
+            "avg_confidence": None,
+            "sessions": 0,
+            "sentiment_distribution": {}
+        }
+    
+    try:
+        async with pool.acquire() as conn:
+            # Get global counts
+            row = await conn.fetchrow("SELECT total_analyses, total_emotions FROM global_insights LIMIT 1")
+            total_analyses = row["total_analyses"] if row else 0
+            total_emotions = row["total_emotions"] if row else 0
+
+            # Calculate average confidence (all-time)
+            avg_conf_row = await conn.fetchrow("SELECT AVG((summary->>'confidence')::float) AS avg_confidence FROM analysis_history WHERE summary->>'confidence' IS NOT NULL")
+            avg_confidence = avg_conf_row["avg_confidence"] if avg_conf_row else None
+
+            # Count all-time unique users
+            sessions_row = await conn.fetchrow("SELECT COUNT(DISTINCT user_id) AS sessions FROM analysis_history")
+            sessions = sessions_row["sessions"] if sessions_row else 0
+
+            # Sentiment distribution (all-time, by paragraph_sentiment)
+            sentiment_rows = await conn.fetch("SELECT summary->>'sentiment' AS sentiment, COUNT(*) AS count FROM analysis_history WHERE summary->>'sentiment' IS NOT NULL GROUP BY sentiment")
+            sentiment_distribution = {row["sentiment"]: row["count"] for row in sentiment_rows}
+
+            return {
+                "total_analyses": total_analyses,
+                "total_emotions": total_emotions,
+                "avg_confidence": avg_confidence,
+                "sessions": sessions,
+                "sentiment_distribution": sentiment_distribution
+            }
+    except Exception as e:
+        print(f"❌ [DATABASE ERROR in /insights] {e}")
+        return {
+            "error": f"Database error: {str(e)}",
+            "total_analyses": 0,
+            "total_emotions": 0,
+            "avg_confidence": None,
+            "sessions": 0,
+            "sentiment_distribution": {}
         }
 
 # if __name__ == "__main__":
