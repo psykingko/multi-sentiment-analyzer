@@ -96,6 +96,48 @@ app.add_middleware(GZipMiddleware, minimum_size=500)
 
 
 
+async def initialize_database():
+    """Initialize database tables if they don't exist"""
+    if pool is None:
+        print("⚠️ [DB_INIT] Database pool is None, skipping initialization")
+        return False
+    
+    try:
+        async with pool.acquire() as conn:
+            # Check if global_insights table exists and has data
+            exists = await conn.fetchval("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_name = 'global_insights'
+                )
+            """)
+            
+            if not exists:
+                print("📊 [DB_INIT] Creating global_insights table...")
+                await conn.execute("""
+                    CREATE TABLE IF NOT EXISTS global_insights (
+                        id SERIAL PRIMARY KEY,
+                        total_analyses INTEGER DEFAULT 0,
+                        total_emotions INTEGER DEFAULT 0
+                    )
+                """)
+            
+            # Ensure there's at least one row in global_insights
+            count = await conn.fetchval("SELECT COUNT(*) FROM global_insights")
+            if count == 0:
+                print("📊 [DB_INIT] Inserting initial row in global_insights...")
+                await conn.execute("""
+                    INSERT INTO global_insights (total_analyses, total_emotions)
+                    VALUES (0, 0)
+                """)
+            
+            print("✅ [DB_INIT] Database initialization completed successfully")
+            return True
+            
+    except Exception as e:
+        print(f"❌ [DB_INIT ERROR] Failed to initialize database: {e}")
+        return False
+
 @app.on_event("startup")
 async def startup():
     global pool
@@ -113,26 +155,46 @@ async def startup():
         pool = None
         return
 
-    try:
-        if env_mode == "production":
-            # For Render/Production, disable SSL verification for Supabase
-            ssl_context = ssl._create_unverified_context()
-            print("🔒 Using unverified SSL context for Supabase compatibility")
-        else:
-            ssl_context = ssl._create_unverified_context()
-            print("⚠️ Using unverified SSL context (Local mode)")
-
-        pool = await asyncpg.create_pool(
-            dsn=DATABASE_URL,
-            min_size=1,
-            max_size=5,
-            command_timeout=60,
-            ssl=ssl_context
-        )
-        print("✅ Connected to Supabase database successfully!")
-    except Exception as e:
-        print(f"❌ [DATABASE CONNECTION ERROR] {e}")
-        pool = None
+    # Try multiple connection attempts with different SSL configurations
+    connection_attempts = [
+        {"ssl": "require"},
+        {"ssl": ssl._create_unverified_context()},
+        {"ssl": None}
+    ]
+    
+    for attempt, ssl_config in enumerate(connection_attempts, 1):
+        try:
+            print(f"🔄 Database connection attempt {attempt}/3 with SSL config: {ssl_config}")
+            
+            pool = await asyncpg.create_pool(
+                dsn=DATABASE_URL,
+                min_size=1,
+                max_size=5,
+                command_timeout=60,
+                **ssl_config
+            )
+            
+            # Test the connection
+            async with pool.acquire() as conn:
+                await conn.fetchval("SELECT 1")
+            
+            print("✅ Connected to Supabase database successfully!")
+            
+            # Initialize database tables
+            await initialize_database()
+            return
+            
+        except Exception as e:
+            print(f"❌ [DATABASE CONNECTION ATTEMPT {attempt}] {e}")
+            if pool:
+                try:
+                    await pool.close()
+                except:
+                    pass
+                pool = None
+    
+    print("❌ [CRITICAL] All database connection attempts failed. Running without database.")
+    pool = None
 
 
 @app.on_event("shutdown")
@@ -153,7 +215,17 @@ def root():
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok"}
+    return {"status": "ok", "pool_status": pool is not None}
+
+@app.get("/debug/pool")
+async def debug_pool():
+    """Debug endpoint to check pool status"""
+    return {
+        "pool_exists": pool is not None,
+        "pool_type": str(type(pool)),
+        "database_url_set": DATABASE_URL is not None,
+        "env_mode": env_mode
+    }
 
 @app.get("/version")
 def version():
@@ -169,6 +241,10 @@ else:
     print("[ERROR] DATABASE_URL is not set!")
 
 async def increment_global_insights(num_emotions: int):
+    if pool is None:
+        print("⚠️ [INCREMENT_INSIGHTS] Database pool is None, skipping increment")
+        return
+    
     try:
         async with pool.acquire() as conn:
             await conn.execute("""
@@ -176,9 +252,10 @@ async def increment_global_insights(num_emotions: int):
                 SET total_analyses = total_analyses + 1,
                     total_emotions = total_emotions + $1
             """, num_emotions)
+            print(f"✅ [INCREMENT_INSIGHTS] Successfully incremented with {num_emotions} emotions")
     except Exception as e:
-        print(f"[ERROR] Could not connect to database: {e}")
-        raise
+        print(f"❌ [INCREMENT_INSIGHTS ERROR] Could not update database: {e}")
+        # Don't raise the exception, just log it
 
 @app.post("/analyze", response_model=SentimentResponse)
 def analyze_sentiment_api(request: SentimentRequest, model: str = Query("rule", enum=["rule", "deep"])) -> SentimentResponse:
@@ -298,7 +375,7 @@ async def increment_insights(num_emotions: int = Body(..., embed=True)):
     try:
         await increment_global_insights(num_emotions)
         print("[DEBUG] increment_global_insights succeeded")
-        return {"status": "ok"}
+        return {"status": "ok", "message": "Insights updated successfully"}
     except Exception as e:
         print(f"[ERROR] increment_global_insights failed: {e}")
         return {"status": "error", "detail": str(e)}
@@ -328,18 +405,28 @@ def soulsync_chat(request: SoulSyncChatRequest):
 
 @app.get("/insights")
 async def get_insights():
+    print(f"🔍 [INSIGHTS DEBUG] Pool status: {pool is not None}")
+    print(f"🔍 [INSIGHTS DEBUG] Pool object: {pool}")
+    
     if pool is None:
+        print("⚠️ [INSIGHTS] Database pool is None, returning default values")
         return {
             "error": "Database connection not available",
             "total_analyses": 0,
             "total_emotions": 0,
-            "avg_confidence": None,
+            "avg_confidence": 0.0,
             "sessions": 0,
-            "sentiment_distribution": {}
+            "sentiment_distribution": {
+                "Positive": 0,
+                "Negative": 0,
+                "Neutral": 0
+            }
         }
     
     try:
+        print("🔍 [INSIGHTS DEBUG] Attempting to acquire connection...")
         async with pool.acquire() as conn:
+            print("🔍 [INSIGHTS DEBUG] Connection acquired successfully")
             # Get global counts
             row = await conn.fetchrow("SELECT total_analyses, total_emotions FROM global_insights LIMIT 1")
             total_analyses = row["total_analyses"] if row else 0
@@ -347,7 +434,7 @@ async def get_insights():
 
             # Calculate average confidence (all-time)
             avg_conf_row = await conn.fetchrow("SELECT AVG((summary->>'confidence')::float) AS avg_confidence FROM analysis_history WHERE summary->>'confidence' IS NOT NULL")
-            avg_confidence = avg_conf_row["avg_confidence"] if avg_conf_row else None
+            avg_confidence = avg_conf_row["avg_confidence"] if avg_conf_row else 0.0
 
             # Count all-time unique users
             sessions_row = await conn.fetchrow("SELECT COUNT(DISTINCT user_id) AS sessions FROM analysis_history")
@@ -357,29 +444,38 @@ async def get_insights():
             sentiment_rows = await conn.fetch("SELECT summary->>'sentiment' AS sentiment, COUNT(*) AS count FROM analysis_history WHERE summary->>'sentiment' IS NOT NULL GROUP BY sentiment")
             sentiment_distribution = {row["sentiment"]: row["count"] for row in sentiment_rows}
 
+            print("🔍 [INSIGHTS DEBUG] Database queries completed successfully")
             return {
                 "total_analyses": total_analyses,
                 "total_emotions": total_emotions,
-                "avg_confidence": avg_confidence,
+                "avg_confidence": round(avg_confidence, 2) if avg_confidence else 0.0,
                 "sessions": sessions,
                 "sentiment_distribution": sentiment_distribution
             }
     except Exception as e:
         print(f"❌ [DATABASE ERROR in /insights] {e}")
+        print(f"🔍 [INSIGHTS DEBUG] Exception type: {type(e)}")
         return {
             "error": f"Database error: {str(e)}",
             "total_analyses": 0,
             "total_emotions": 0,
-            "avg_confidence": None,
+            "avg_confidence": 0.0,
             "sessions": 0,
-            "sentiment_distribution": {}
+            "sentiment_distribution": {
+                "Positive": 0,
+                "Negative": 0,
+                "Neutral": 0
+            }
         }
 
+# For local development only
 # if __name__ == "__main__":
 #     import uvicorn
     
 #     # Get port from environment variable (Render sets this)
 #     port = int(os.environ.get("PORT", 8000))
+    
+#     print(f"🚀 Starting server on port {port}")
     
 #     # Launch FastAPI server
 #     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=(env_mode != "production"))
