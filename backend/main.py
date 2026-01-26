@@ -346,12 +346,8 @@ async def get_insights():
         }
 
 if __name__ == "__main__":
-    import asyncio
     import uvicorn
-
-    # Run DB connection check before starting
-    asyncio.run(startup())
-
+    
     # Get port from environment variable (Render sets this)
     port = int(os.environ.get("PORT", 8000))
     
