@@ -3,7 +3,7 @@ import json
 import logging
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
-import google.generativeai as genai
+from google import genai
 from .memory_manager import ConversationMemory
 from .therapeutic_techniques import TherapeuticTechniques
 from .crisis_detector import CrisisDetector
@@ -35,14 +35,19 @@ class SoulSyncAgent:
         }
         
     def setup_gemini(self):
-        """Initialize Gemini API"""
-        api_key = os.environ.get("GEMINI_API_KEY")
-        if not api_key:
-            raise ValueError("GEMINI_API_KEY environment variable not set")
+        """Initialize Google GenAI"""
+        api_key = os.environ.get("GOOGLE_API_KEY")
+        project_id = os.environ.get("GCP_PROJECT_ID")
         
+        if not api_key:
+            raise ValueError("GOOGLE_API_KEY environment variable not set")
+        
+        # Configure the client
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-2.0-flash')
-        logger.info("Gemini API initialized successfully")
+        
+        # Initialize the model
+        self.model = genai.GenerativeModel("gemini-1.5-pro")
+        logger.info("Google GenAI initialized successfully")
     
     def start_session(self, analysis_report: Dict) -> str:
         """
@@ -314,12 +319,14 @@ Respond with deep therapeutic understanding and genuine human connection. Do not
 """
     
     def _generate_response(self, prompt: str) -> str:
-        """Generate response using Gemini"""
+        """Generate response using Google GenAI"""
         try:
             response = self.model.generate_content(prompt)
             return response.text
         except Exception as e:
             logger.error(f"Error generating response: {e}")
+            import traceback
+            traceback.print_exc()
             return "I'm having trouble processing right now. Could you share a bit more about how you're feeling?"
     
     def _log_interaction(self, role: str, content: str, response: str):

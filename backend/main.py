@@ -296,19 +296,26 @@ async def increment_insights(num_emotions: int = Body(..., embed=True)):
 
 @app.post("/soulsync/chat", response_model=SoulSyncChatResponse)
 def soulsync_chat(request: SoulSyncChatRequest):
-    print("Received:", request)
-    # Use session_id if provided, else create new
-    import uuid
-    session_id = request.session_id or str(uuid.uuid4())
-    if session_id not in soulsync_sessions:
-        MAX_SESSIONS = 3  # or even 2-3 for free tier
-        if len(soulsync_sessions) >= MAX_SESSIONS:
-            soulsync_sessions.pop(next(iter(soulsync_sessions)))
-        soulsync_sessions[session_id] = SoulSyncAgent()
-    agent = soulsync_sessions[session_id]
-    # For first message, optionally call start_session (not implemented here)
-    response, should_continue = agent.continue_conversation(request.message)
-    return SoulSyncChatResponse(response=response, session_id=session_id, should_continue=should_continue)
+    # SoulSync is temporarily disabled due to Gemini API access limitations
+    # Both Google AI Studio and Vertex AI require paid access
+    return SoulSyncChatResponse(
+        response="SoulSync chat is currently unavailable. Both Google AI Studio and Vertex AI require billing to be enabled for Gemini model access. Please use the core sentiment analysis features instead.",
+        session_id=request.session_id or "disabled",
+        should_continue=False
+    )
+    
+    # Original implementation (disabled):
+    # print("Received:", request)
+    # import uuid
+    # session_id = request.session_id or str(uuid.uuid4())
+    # if session_id not in soulsync_sessions:
+    #     MAX_SESSIONS = 3
+    #     if len(soulsync_sessions) >= MAX_SESSIONS:
+    #         soulsync_sessions.pop(next(iter(soulsync_sessions)))
+    #     soulsync_sessions[session_id] = SoulSyncAgent()
+    # agent = soulsync_sessions[session_id]
+    # response, should_continue = agent.continue_conversation(request.message)
+    # return SoulSyncChatResponse(response=response, session_id=session_id, should_continue=should_continue)
 
 @app.get("/insights")
 async def get_insights():

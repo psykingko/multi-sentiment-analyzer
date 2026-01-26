@@ -13,3 +13,7 @@ __pycache__/
 .ipynb_checkpoints/
 
 .env
+
+# Google Cloud service account keys
+multi-sentiment-analyzer-b60b7cc07a00.json
+*.json
