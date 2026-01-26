@@ -73,8 +73,8 @@ def ensure_nltk_textblob_corpora():
     except Exception as e:
         print(f"[WARN] Could not download TextBlob corpora: {e}")
 
-# Ensure corpora are present before app starts
-ensure_nltk_textblob_corpora()
+# Don't run NLTK downloads at import time - move to startup event
+# ensure_nltk_textblob_corpora()
 
 app = FastAPI()
 
@@ -99,6 +99,14 @@ app.add_middleware(GZipMiddleware, minimum_size=500)
 @app.on_event("startup")
 async def startup():
     global pool
+    
+    # Download NLTK data in background during startup
+    print("📚 Downloading NLTK data...")
+    try:
+        ensure_nltk_textblob_corpora()
+        print("✅ NLTK data downloaded successfully!")
+    except Exception as e:
+        print(f"⚠️ Warning: NLTK download failed: {e}")
 
     if not DATABASE_URL:
         print("❌ [DATABASE] DATABASE_URL is not set. Skipping DB pool creation.")
@@ -345,11 +353,11 @@ async def get_insights():
             "sentiment_distribution": sentiment_distribution
         }
 
-if __name__ == "__main__":
-    import uvicorn
+# if __name__ == "__main__":
+#     import uvicorn
     
-    # Get port from environment variable (Render sets this)
-    port = int(os.environ.get("PORT", 8000))
+#     # Get port from environment variable (Render sets this)
+#     port = int(os.environ.get("PORT", 8000))
     
-    # Launch FastAPI server
-    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=(env_mode != "production"))
+#     # Launch FastAPI server
+#     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=(env_mode != "production"))
